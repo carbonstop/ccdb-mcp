@@ -1,11 +1,14 @@
 {
-  "name": "ccdb-mcp-server",
+  "name": "@carbonstop-official/ccdb-mcp-server",
   "version": "1.0.0",
   "description": "CCDB碳排放因子搜索 MCP Server - 支持 Streamable HTTP 和 stdio 双传输机制",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "ccdb-factor-mcp": "dist/index.js"
+    "ccdb-mcp": "dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist",
