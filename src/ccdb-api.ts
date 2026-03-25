@@ -12,29 +12,17 @@ import { createHash } from 'node:crypto';
 
 /** 单条因子记录 */
 export interface FactorRow {
-  sourceId: number;
-  area: string | null;
-  factorPattern: string;
-  applyYear: string;
-  gwp: string | null;
+  institution: string;
+  unit: string;
   business: string | null;
   year: string;
   documentType: string | null;
-  description: string;
-  specification: string | null;
-  sourceLevel: string | null;
-  countries: string;
-  nameEn: string | null;
-  source: string;
-  applyYearEnd: string;
-  parentId: string;
-  isEncryption: string;
-  institution: string;
-  unit: string;
-  cValue: string;
   name: string;
-  factorClassify: string | null;
-  id: string;
+  description: string | null;
+  specification: string | null;
+  countries: string;
+  sourceLevel: string | null;
+  factor: string;
 }
 
 /** API 响应体 */
@@ -67,7 +55,7 @@ export interface SearchParams {
 // ============================================================
 
 const CCDB_API_URL =
-  'https://gateway-base-test.carbonstop.com/management/system/website/searchFactorDataMcp';
+  process.env.CCDB_API_URL || 'https://gateway.carbonstop.com/management/system/website/searchFactorDataMcp';
 
 /** 用于 MD5 签名的 business 盐值 */
 const SIGN_BUSINESS = 'mcp_ccdb_search';
@@ -77,7 +65,7 @@ const SIGN_BUSINESS = 'mcp_ccdb_search';
 // ============================================================
 
 /**
- * 生成 sign 字段：md5(business + name)
+ * 生成 sign 字段：md5(SIGN_BUSINESS + name)
  */
 function generateSign(name: string): string {
   return createHash('md5').update(`${SIGN_BUSINESS}${name}`).digest('hex');
@@ -153,12 +141,11 @@ export function formatFactorRows(rows: FactorRow[]): string {
     .map((row, idx) => {
       const lines: string[] = [
         `━━━ 因子 #${idx + 1} ━━━`,
-        `📌 名称: ${row.name}${row.nameEn ? ` (${row.nameEn})` : ''}`,
-        `📊 排放因子值: ${row.cValue} ${row.unit}`,
-        `🌍 适用国家/地区: ${row.countries}${row.area ? ` - ${row.area}` : ''}`,
-        `📅 适用年份: ${row.applyYear}${row.applyYearEnd !== '不限' ? ` ~ ${row.applyYearEnd}` : ' ~ 至今'}`,
+        `📌 名称: ${row.name}`,
+        `📊 排放因子值: ${row.factor} ${row.unit}`,
+        `🌍 适用国家/地区: ${row.countries}`,
+        `📅 发布年份: ${row.year}`,
         `🏛️ 发布机构: ${row.institution}`,
-        `📑 数据来源: ${row.source}`,
       ];
 
       if (row.specification) {
@@ -177,7 +164,6 @@ export function formatFactorRows(rows: FactorRow[]): string {
         lines.push(`💡 描述: ${row.description}`);
       }
 
-      lines.push(`🔗 因子ID: ${row.id}`);
       return lines.join('\n');
     })
     .join('\n\n');

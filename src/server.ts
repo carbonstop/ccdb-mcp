@@ -90,22 +90,19 @@ export function createCcdbMcpServer(): McpServer {
       try {
         const result = await searchFactors({ name, lang });
 
-        // 只保留核心字段，减少 token 消耗
+        // 直接返回精简后的结果
         const simplified = result.rows.map((row: FactorRow) => ({
-          id: row.id,
           name: row.name,
-          nameEn: row.nameEn,
-          cValue: row.cValue,
+          factor: row.factor,
           unit: row.unit,
           countries: row.countries,
-          area: row.area,
-          applyYear: row.applyYear,
-          applyYearEnd: row.applyYearEnd,
+          year: row.year,
           institution: row.institution,
-          source: row.source,
           specification: row.specification,
+          description: row.description,
           sourceLevel: row.sourceLevel,
           business: row.business,
+          documentType: row.documentType,
         }));
 
         return {
@@ -178,8 +175,8 @@ export function createCcdbMcpServer(): McpServer {
           // 展示前 3 条核心信息
           const top = data.rows.slice(0, 3);
           for (const row of top) {
-            lines.push(`  📊 ${row.cValue} ${row.unit}`);
-            lines.push(`     ${row.specification || row.name} | ${row.countries} | ${row.applyYear}`);
+            lines.push(`  📊 ${row.factor} ${row.unit}`);
+            lines.push(`     ${row.specification || row.name} | ${row.countries} | ${row.year}`);
             lines.push(`     来源: ${row.institution}`);
             lines.push('');
           }
