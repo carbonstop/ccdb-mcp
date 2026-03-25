@@ -1,5 +1,7 @@
 # CCDB 碳排放因子搜索 MCP Server
 
+[![npm version](https://img.shields.io/npm/v/ccdb-factor-mcp-server.svg)](https://www.npmjs.com/package/ccdb-factor-mcp-server)
+
 基于 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) 构建的碳排放因子数据库搜索服务，支持 **Streamable HTTP** 和 **stdio** 双传输机制。
 
 ## ✨ 功能
@@ -17,34 +19,43 @@
 
 ## 🚀 快速开始
 
-### 安装依赖
+### 方式一：通过 npx 直接运行（推荐）
+
+无需安装，直接运行：
 
 ```bash
+# stdio 模式
+npx ccdb-factor-mcp-server --stdio
+
+# Streamable HTTP 模式
+npx ccdb-factor-mcp-server --http --port 3000
+```
+
+### 方式二：全局安装
+
+```bash
+npm install -g ccdb-factor-mcp-server
+
+# stdio 模式
+ccdb-factor-mcp --stdio
+
+# Streamable HTTP 模式
+ccdb-factor-mcp --http --port 3000
+```
+
+### 方式三：从源码运行
+
+```bash
+git clone https://github.com/carbonstop/ccdb-mcp.git
+cd ccdb-mcp
 npm install
-```
-
-### 编译
-
-```bash
 npm run build
-```
 
-### 运行
-
-#### 1. stdio 模式（默认，用于 Claude Desktop / Cursor 等本地客户端）
-
-```bash
+# stdio 模式
 npm start
-# 或
-node dist/index.js --stdio
-```
 
-#### 2. Streamable HTTP 模式（用于远程/Web 客户端）
-
-```bash
+# Streamable HTTP 模式
 node dist/index.js --http
-# 指定端口
-node dist/index.js --http --port 8080
 ```
 
 ### 开发模式（无需编译）
@@ -67,8 +78,8 @@ npm run dev:stdio
 {
   "mcpServers": {
     "ccdb-factor-search": {
-      "command": "node",
-      "args": ["/Users/lijihua/Desktop/ccdb-mcp/dist/index.js", "--stdio"]
+      "command": "npx",
+      "args": ["-y", "ccdb-factor-mcp-server", "--stdio"]
     }
   }
 }
@@ -79,7 +90,7 @@ npm run dev:stdio
 先启动 HTTP 服务：
 
 ```bash
-node dist/index.js --http --port 3000
+npx ccdb-factor-mcp-server --http --port 3000
 ```
 
 然后在 Claude Desktop 配置中添加：
@@ -101,8 +112,8 @@ node dist/index.js --http --port 3000
 ```json
 {
   "ccdb-factor-search": {
-    "command": "node",
-    "args": ["/Users/lijihua/Desktop/ccdb-mcp/dist/index.js", "--stdio"]
+    "command": "npx",
+    "args": ["-y", "ccdb-factor-mcp-server", "--stdio"]
   }
 }
 ```
@@ -148,6 +159,13 @@ ccdb-mcp/
 ```
 
 返回格式化的碳排放因子数据，包含因子值、单位、适用地区、年份、来源机构等详细信息。
+
+## 📦 发布到 npm
+
+```bash
+npm login
+npm publish
+```
 
 ## License
 
