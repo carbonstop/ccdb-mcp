@@ -1,6 +1,6 @@
 # CCDB 碳排放因子搜索 MCP Server
 
-[![npm version](https://img.shields.io/npm/v/@carbonstop-official/ccdb-mcp-server.svg)](https://www.npmjs.com/package/@carbonstop-official/ccdb-mcp-server)
+[![npm version](https://img.shields.io/npm/v/ccdb-mcp-server.svg)](https://www.npmjs.com/package/ccdb-mcp-server)
 
 基于 [Model Context Protocol (MCP)](https://modelcontextprotocol.io) 构建的碳排放因子数据库搜索服务，支持 **Streamable HTTP** 和 **stdio** 双传输机制。
 
@@ -25,16 +25,16 @@
 
 ```bash
 # stdio 模式
-npx @carbonstop-official/ccdb-mcp-server --stdio
+npx ccdb-mcp-server --stdio
 
 # Streamable HTTP 模式
-npx @carbonstop-official/ccdb-mcp-server --http --port 3000
+npx ccdb-mcp-server --http --port 3000
 ```
 
 ### 方式二：全局安装
 
 ```bash
-npm install -g @carbonstop-official/ccdb-mcp-server
+npm install -g ccdb-mcp-server
 
 # stdio 模式
 ccdb-mcp --stdio
@@ -79,7 +79,7 @@ npm run dev:stdio
   "mcpServers": {
     "ccdb-factor-search": {
       "command": "npx",
-      "args": ["-y", "@carbonstop-official/ccdb-mcp-server", "--stdio"]
+      "args": ["-y", "ccdb-mcp-server", "--stdio"]
     }
   }
 }
@@ -90,7 +90,7 @@ npm run dev:stdio
 先启动 HTTP 服务：
 
 ```bash
-npx @carbonstop-official/ccdb-mcp-server --http --port 3000
+npx ccdb-mcp-server --http --port 3000
 ```
 
 然后在 Claude Desktop 配置中添加：
@@ -113,7 +113,7 @@ npx @carbonstop-official/ccdb-mcp-server --http --port 3000
 {
   "ccdb-factor-search": {
     "command": "npx",
-    "args": ["-y", "@carbonstop-official/ccdb-mcp-server", "--stdio"]
+    "args": ["-y", "ccdb-mcp-server", "--stdio"]
   }
 }
 ```

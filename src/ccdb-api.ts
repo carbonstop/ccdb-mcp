@@ -70,7 +70,7 @@ const CCDB_API_URL =
   'https://gateway-base-test.carbonstop.com/management/system/website/searchFactorDataMcp';
 
 /** 用于 MD5 签名的 business 盐值 */
-const SIGN_BUSINESS = 'business';
+const SIGN_BUSINESS = 'mcp_ccdb_search';
 
 // ============================================================
 // 工具函数
