@@ -8,11 +8,13 @@ import {
 } from './execution-context.js';
 import { InternalFactorClient } from './internal-client.js';
 import { createServer } from './server.js';
+import { authenticateDirect, directAuthConfig, type DirectAuthConfig } from './direct-auth.js';
 
 const MAX_REQUEST_BYTES = 64 * 1024;
 const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 
 export interface HttpConfig {
+  directAuth?: DirectAuthConfig;
   resource: string;
   endpoint: string;
   keys: Record<string, Buffer>;
@@ -24,6 +26,9 @@ export interface HttpConfig {
   port: number;
 }
 export function httpConfig(env: NodeJS.ProcessEnv = process.env): HttpConfig {
+  const mode = env.CCDB_MCP_AUTH_MODE || 'gateway';
+  if (!['gateway', 'direct'].includes(mode))
+    throw new CcdbError('INVALID_CONFIG', 'CCDB_MCP_AUTH_MODE 必须为 gateway 或 direct');
   const resource = validUrl(env.CCDB_MCP_RESOURCE || '').href;
   const endpoint = new URL(env.CCDB_MCP_EXECUTION_URL || '');
   if (
@@ -78,6 +83,7 @@ export function httpConfig(env: NodeJS.ProcessEnv = process.env): HttpConfig {
   )
     throw new CcdbError('INVALID_CONFIG', 'Host/Origin 白名单需填写精确地址，不能用通配');
   return {
+    directAuth: mode === 'direct' ? directAuthConfig(env) : undefined,
     resource,
     endpoint: endpoint.href,
     keys: parseVerificationKeys(env.CCDB_MCP_CONTEXT_KEYS),
@@ -231,6 +237,23 @@ export function createHttpApplication(settings: HttpConfig, fetcher: typeof fetc
     if (!settings.hosts.includes(host) || (origin && !settings.origins.includes(origin)))
       return errorResponse(new CcdbError('FORBIDDEN_ORIGIN', 'Host 或 Origin 不在白名单', 403));
     const path = new URL(request.url).pathname;
+    if (
+      settings.directAuth &&
+      request.method === 'GET' &&
+      [
+        '/.well-known/oauth-protected-resource',
+        '/.well-known/oauth-protected-resource/mcp/ccdb',
+      ].includes(path)
+    )
+      return Response.json(
+        {
+          resource: settings.resource,
+          authorization_servers: [settings.directAuth.issuer],
+          scopes_supported: ['ccdb.factor.search', 'ccdb.factor.read'],
+          bearer_methods_supported: ['header'],
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+      );
     if (path === '/health' && request.method === 'GET')
       return Response.json({ status: 'ok', service: 'ccdb-mcp', version: '2.0.0' });
     if (path !== '/mcp/ccdb') return errorResponse(new CcdbError('NOT_FOUND', '接口不存在', 404));
@@ -249,7 +272,16 @@ export function createHttpApplication(settings: HttpConfig, fetcher: typeof fetc
       return errorResponse(new CcdbError('SERVER_BUSY', '连接数达到上限', 429, undefined, 1));
     active++;
     try {
-      const ticket = request.headers.get('X-CCDB-Execution-Context');
+      const ticket = settings.directAuth
+        ? await authenticateDirect(
+            request,
+            settings.directAuth,
+            settings.resource,
+            settings.keys,
+            settings.timeoutMs,
+            fetcher,
+          )
+        : request.headers.get('X-CCDB-Execution-Context');
       const claims = verifyExecutionContext(ticket, settings.keys, settings.resource);
       if (request.method !== 'POST')
         return new Response(null, { status: 405, headers: { Allow: 'POST, OPTIONS' } });
@@ -340,7 +372,9 @@ export async function startHttp(env: NodeJS.ProcessEnv = process.env) {
     server.listen(settings.port, settings.host, yes);
   });
   process.stderr.write(
-    `CCDB MCP internal adapter listening on ${settings.host}:${settings.port}; requires signed gateway context.\n`,
+    `CCDB MCP listening on ${settings.host}:${settings.port}; auth mode: ${
+      settings.directAuth ? 'direct' : 'gateway'
+    }.\n`,
   );
   const close = () => {
     server.close();

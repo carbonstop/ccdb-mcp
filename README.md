@@ -37,6 +37,8 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 ## 远程连接器：Streamable HTTP
 
+新增 **direct 模式**允许 WorkBuddy 直接连接 MCP 的公开 HTTPS 地址：MCP 提供 OAuth 发现，调用独立 Auth/Management 校验凭证，再调用内部业务接口，不经过业务 Gateway。后端校验契约尚需实现/联调，当前 npm 2.0.0 尚不包含此改造。见 [独立 HTTP 配置与接口契约](docs/DIRECT_HTTP.md)。同仓库保留 stdio，以下 Gateway 说明仅适用于默认的 gateway 模式。
+
 远程优先由宿主发起 OAuth 授权（通常为授权码 + PKCE，取决于宿主支持），不是执行本地 device 登录；API Key 是宿主支持配置认证请求头时的手动备选。OAuth 失败时提示用户处理授权，不自动降级为 Key。部署人员不要先执行 device 登录来给所有远程用户共用身份。
 
 `ccdb-mcp serve` 已提供无状态 **Streamable HTTP**，端点为 `/mcp/ccdb`。本地 stdio 与远程 HTTP 共用两个业务工具；不提供旧版 HTTP+SSE 的 `/sse`、`/messages` 双端点。
@@ -116,4 +118,4 @@ stdio 启动不自动弹浏览器，也不向协议 stdout 打印日志；未登
 
 See [configuration](docs/CONFIGURATION.md), [migration](docs/MIGRATION.md), and [factor guidance](docs/FACTOR_GUIDANCE.md).
 
-Remote deployment: [gateway and internal adapter](docs/REMOTE_MCP.md). Do not expose `serve` directly to the public Internet.
+Remote deployment: [gateway 模式](docs/REMOTE_MCP.md) / [direct 模式](docs/DIRECT_HTTP.md)。仅完成 direct 模式的认证与入口防护配置后，才对外提供 MCP HTTPS 地址。

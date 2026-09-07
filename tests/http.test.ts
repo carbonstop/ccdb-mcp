@@ -4,6 +4,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { createHttpApplication, type HttpConfig } from '../packages/ccdb-mcp/src/http.js';
+import { directAuthConfig } from '../packages/ccdb-mcp/src/direct-auth.js';
 import { verifyExecutionContext } from '../packages/ccdb-mcp/src/execution-context.js';
 import { fixture, searchResult } from './helpers.js';
 const key = randomBytes(32),
@@ -83,6 +84,124 @@ function parseResponse(text: string) {
   assert.ok(data, text);
   return JSON.parse(data.slice(5));
 }
+test('direct OAuth discovery and official SDK calls do not require a gateway', async () => {
+  const config = {
+    ...settings('https://management.test/internal/ccdb/mcp/execute'),
+    directAuth: {
+      issuer: 'https://auth.test/auth',
+      authenticateUrl: 'https://auth.test/internal/authenticate',
+      serviceToken: 'private-service-token',
+    },
+  };
+  const seen: string[] = [];
+  const app = createHttpApplication(config, async (url, init) => {
+    const headers = new Headers(init?.headers);
+    const body = JSON.parse(String(init?.body));
+    if (String(url) === config.directAuth.authenticateUrl) {
+      assert.equal(headers.get('Authorization'), 'Bearer private-service-token');
+      assert.equal(body.resource, resource);
+      const userId = body.credential === 'user-one' ? '100' : '101';
+      return Response.json({ executionContext: ticket({ requestId: body.requestId, userId }) });
+    }
+    assert.equal(String(url), config.endpoint);
+    assert.equal(headers.get('Authorization'), null);
+    assert.equal(headers.get('X-API-Key'), null);
+    seen.push(
+      verifyExecutionContext(headers.get('X-CCDB-Execution-Context'), config.keys, resource).userId,
+    );
+    return Response.json(searchResult('http://factor.test'));
+  });
+  const metadata = await app(
+    new Request(resource.replace('/mcp/ccdb', '/.well-known/oauth-protected-resource/mcp/ccdb')),
+  );
+  assert.equal(metadata.status, 200);
+  assert.deepEqual((await metadata.json()).authorization_servers, ['https://auth.test/auth']);
+  const missing = await app(new Request(resource, { method: 'POST' }));
+  assert.equal(missing.status, 401);
+  assert.match(missing.headers.get('WWW-Authenticate') || '', /resource_metadata=/);
+  await Promise.all(
+    ['user-one', 'user-two'].map(async (token) => {
+      const client = new Client({ name: 'direct-test', version: '1' });
+      try {
+        await client.connect(
+          new StreamableHTTPClientTransport(new URL(resource), {
+            requestInit: { headers: { Authorization: `Bearer ${token}` } },
+            fetch: async (input, init) => app(new Request(input, init)),
+          }),
+        );
+        assert.equal((await client.listTools()).tools.length, 2);
+        assert.deepEqual(
+          (await client.callTool({ name: 'search_emission_factors', arguments: { query: '电力' } }))
+            .structuredContent,
+          searchResult('http://factor.test'),
+        );
+      } finally {
+        await client.close();
+      }
+    }),
+  );
+  assert.deepEqual(seen.sort(), ['100', '101']);
+});
+
+test('direct authentication fails closed and rejects forged context or ambiguous credentials', async () => {
+  const config = {
+    ...settings('https://management.test/internal/ccdb/mcp/execute'),
+    directAuth: {
+      issuer: 'https://auth.test',
+      authenticateUrl: 'https://auth.test/check',
+      serviceToken: 'service-token',
+    },
+  };
+  let calls = 0;
+  let mode = 'ok';
+  const app = createHttpApplication(config, async (_url, init) => {
+    calls++;
+    assert.equal(init?.redirect, 'error');
+    if (mode === 'revoked') return new Response('sensitive-server-response', { status: 401 });
+    if (mode === 'down') throw new Error('secret error');
+    const body = JSON.parse(String(init?.body));
+    assert.equal(body.credentialType, 'API_KEY');
+    return Response.json({
+      executionContext: ticket({
+        requestId: mode === 'mismatch' ? 'wrong-id' : body.requestId,
+        authType: 'API_KEY',
+        clientId: undefined,
+        grantId: undefined,
+        grantVersion: undefined,
+        keyId: 'key-one',
+        keyVersion: 'a'.repeat(64),
+      }),
+    });
+  });
+  const req = () => {
+    const r = request('tools/list', {}, null);
+    r.headers.delete('Authorization');
+    return r;
+  };
+  const forged = req();
+  forged.headers.set('X-CCDB-Execution-Context', ticket());
+  assert.equal((await app(forged)).status, 401);
+  const ambiguous = req();
+  ambiguous.headers.set('Authorization', 'Bearer token');
+  assert.equal((await app(ambiguous)).status, 400);
+  assert.equal(calls, 0);
+  assert.equal((await app(req())).status, 200);
+  mode = 'revoked';
+  const revoked = await app(req());
+  assert.equal(revoked.status, 401);
+  assert.ok(!(await revoked.text()).includes('sensitive-server-response'));
+  mode = 'down';
+  assert.equal((await app(req())).status, 503);
+  mode = 'mismatch';
+  assert.equal((await app(req())).status, 503);
+  assert.throws(() =>
+    directAuthConfig({
+      CCDB_MCP_AUTH_ISSUER: 'https://auth.test',
+      CCDB_MCP_AUTHENTICATE_URL: 'http://external.test/check',
+      CCDB_MCP_AUTH_SERVICE_TOKEN: 'token',
+    }),
+  );
+});
 test('official Streamable HTTP client initializes, lists and calls tools without sessions', async () => {
   const f = await fixture((c, r) => {
     if (c.path !== '/internal/ccdb/mcp/execute') return false;

@@ -1,5 +1,7 @@
 # 官方远程 MCP：后端适配与本地验收
 
+本文仅说明默认 gateway 模式。无需业务网关的独立入口见 [direct 模式与待实现的后端契约](DIRECT_HTTP.md)。
+
 状态：Node 已实现无状态 Streamable HTTP。本文末尾的历史本地验收不代表生产已部署；WorkBuddy OAuth 和生产 Gateway → Node → Management → CCDB 仍需在目标环境验收。
 
 ## Streamable HTTP 协议与 WorkBuddy 接入

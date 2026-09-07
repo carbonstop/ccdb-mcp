@@ -16,7 +16,7 @@ try {
   else if (['doctor', '--version'].includes(command)) process.exitCode = await runCli(args);
   else if (['--help', '-h'].includes(command))
     process.stdout.write(
-      'ccdb-mcp stdio | login | status | logout | doctor | serve\n登录选项与 ccdb-cli auth 相同；每个包可独立安装。\nserve 启动无状态 Streamable HTTP：POST /mcp/ccdb；不提供旧版 /sse 端点。\nserve 仅用于配置了网关签名上下文的内部服务，不是直传用户 Key 的公共代理。\n',
+      'ccdb-mcp stdio | login | status | logout | doctor | serve\n登录选项与 ccdb-cli auth 相同；每个包可独立安装。\nserve 启动无状态 Streamable HTTP：POST /mcp/ccdb；不提供旧版 /sse 端点。\nCCDB_MCP_AUTH_MODE=gateway（默认）验证网关票据；direct 使用独立后端凭证校验服务，提供公共 OAuth 发现。\n',
     );
   else throw new Error('未知命令，请运行 ccdb-mcp --help');
 } catch (error) {
