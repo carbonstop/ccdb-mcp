@@ -9,14 +9,25 @@ npm 包保持 `ccdb-mcp-server`，命令保持 `ccdb-mcp`，新版为 2.0.0。�
 ```sh
 npm install -g ccdb-mcp-server
 ccdb-mcp --version
-ccdb-mcp login --method device --no-browser
-ccdb-mcp status --json
-ccdb-mcp stdio
 ```
 
 需要固定版本时使用 `npm install -g ccdb-mcp-server@2.0.0`。镜像未同步时可追加 `--registry=https://registry.npmjs.org/`。2.x 的认证与工具接口不兼容旧 1.x，升级前请阅读 [迁移说明](docs/MIGRATION.md)。
 
-宿主以 stdio 启动本命令，并设置 CCDB_PROFILE 和可选 CCDB_API_KEY。API Key 与已保存 OAuth 凭证二选一使用，显式环境 Key 优先。
+## 本地 stdio：默认 device OAuth，API Key 为备选
+
+仅本地 stdio 用户执行以下登录；远程连接器用户不需要在本机安装或登录此包。
+
+```sh
+ccdb-mcp login
+ccdb-mcp status --json
+ccdb-mcp stdio
+```
+
+`ccdb-mcp login` 默认使用 device OAuth，等价于 `ccdb-mcp login --method device`。用户在浏览器完成登录和授权；无浏览器终端可加 `--no-browser`，在另一台设备打开显示的授权链接。设备码登录不是 CLI 专属，这里是本地 MCP 的登录辅助命令，不是宿主通过 stdio 自动进行 OAuth 协商。
+
+API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key` 安全输入，或通过宿主 Secret 配置 `CCDB_API_KEY`。不要在聊天、命令参数或日志里粘贴完整 Key。
+
+默认推荐顺序不改变显式配置：`CCDB_API_KEY` 存在时仍优先于保存的凭证；要恢复 OAuth，用户需从实际启动 MCP 的环境中移除该变量并完成登录。没有环境 Key 时使用已保存的凭证；OAuth 失败不会自动改用 API Key，Key 失败也不会切换 OAuth。查询不会自动发起 device 登录。
 
 业务工具只有 search_emission_factors 和 get_emission_factor_detail。成功返回原始 CCDB JSON 和 structuredContent；不依赖大模型 Key，不自动做建模写入，不将原始候选铺成最终推荐卡片。
 
@@ -25,6 +36,8 @@ ccdb-mcp stdio
 遇到 401/403/429 不切到旧免授权接口。登录只由用户显式执行命令发起，不在 tools/call 时后台弹浏览器。
 
 ## 远程连接器：Streamable HTTP
+
+远程优先由宿主发起 OAuth 授权（通常为授权码 + PKCE，取决于宿主支持），不是执行本地 device 登录；API Key 是宿主支持配置认证请求头时的手动备选。OAuth 失败时提示用户处理授权，不自动降级为 Key。部署人员不要先执行 device 登录来给所有远程用户共用身份。
 
 `ccdb-mcp serve` 已提供无状态 **Streamable HTTP**，端点为 `/mcp/ccdb`。本地 stdio 与远程 HTTP 共用两个业务工具；不提供旧版 HTTP+SSE 的 `/sse`、`/messages` 双端点。
 
@@ -50,7 +63,7 @@ npm install -g ./dist/releases/ccdb-mcp-server-2.0.0.tgz
 
 最后一行安装刚构建的本地开发包，不是 npm registry 安装。构建不会自动发布 npm。
 
-## 配置 MCP 宿主
+## 配置本地 stdio MCP 宿主
 
 ```powershell
 ccdb-mcp login
