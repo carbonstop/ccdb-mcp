@@ -1,6 +1,8 @@
-# 官方远程 MCP：后端适配与本地验收
+# 历史兼容模式：Gateway-first 部署
 
 本文是当前 Gateway → MCP 模式的部署说明。后续 WorkBuddy → MCP → Gateway 方案尚待实现，见 [架构调整与联调前置条件](GATEWAY_BACKED_MCP.md)；不要混用两种方案的配置。
+
+本文仅供已有 Gateway-first 部署维护，不是新部署推荐方案。唯一目标架构见 [PR #5 方案](GATEWAY_BACKED_MCP.md)：WorkBuddy → MCP → Gateway → 业务服务。目标模式尚未实现，不能套用本文的 Management 内部地址配置。PR #4 已关闭。
 
 状态：Node 已实现无状态 Streamable HTTP。本文末尾的历史本地验收不代表生产已部署；WorkBuddy OAuth 和生产 Gateway → Node → Management → CCDB 仍需在目标环境验收。
 
