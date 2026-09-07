@@ -37,6 +37,8 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 ## 远程 Streamable HTTP
 
+后续计划调整为 WorkBuddy → MCP → Gateway → 业务服务；认证契约尚待后端确认，当前包未实现此模式。见 [目标架构说明](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/GATEWAY_BACKED_MCP.md)。以下为当前 Gateway → MCP 模式。
+
 远程优先使用宿主的 OAuth 授权流程（通常为授权码 + PKCE），不要求终端用户执行本地 device 登录。API Key 是宿主支持认证请求头时的手动备选，不在 OAuth 失败后自动切换。
 
 配置内部执行地址、网关签名密钥和 Host 白名单后，运行 `ccdb-mcp serve`，通过网关公开 HTTPS `/mcp/ccdb`。此入口已实现无状态 Streamable HTTP，不是旧版 `/sse` + `/messages` 模式；GET/DELETE 返回 405，通知返回 202，不创建会话。
