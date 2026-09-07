@@ -24,7 +24,19 @@ ccdb-mcp stdio
 
 遇到 401/403/429 不切到旧免授权接口。登录只由用户显式执行命令发起，不在 tools/call 时后台弹浏览器。
 
-远程 HTTP 入口仍需完成并验证后端 audience、鉴权和内部执行适配，stdio 通过不代表远程入口可发布。
+## 远程连接器：Streamable HTTP
+
+`ccdb-mcp serve` 已提供无状态 **Streamable HTTP**，端点为 `/mcp/ccdb`。本地 stdio 与远程 HTTP 共用两个业务工具；不提供旧版 HTTP+SSE 的 `/sse`、`/messages` 双端点。
+
+服务部署方安装 npm 包，按 [远程部署说明](docs/REMOTE_MCP.md) 配置内部执行地址、签名密钥和 Host 白名单，然后运行：
+
+```sh
+ccdb-mcp serve
+```
+
+WorkBuddy 等远程宿主选择 **Streamable HTTP**，填写部署后的 `https://<你的网关域名>/mcp/ccdb`，无需在每个用户电脑安装此 npm 包。该地址是占位示例，不是已上线服务。
+
+必须通过网关完成 OAuth/API Key 鉴权、按用户签发内部上下文，再转发给 Node；不能直接公开 Node 端口，也不能让所有用户共用服务进程的一份登录凭证。OAuth 发现和授权由网关/Auth 提供，不由 `serve` 独立提供。协议互操作测试不等于 WorkBuddy 或生产后端已联调完成。
 
 ## 从源码开发（仅开发人员）
 
