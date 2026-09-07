@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { createHttpApplication, type HttpConfig } from '../packages/ccdb-mcp/src/http.js';
 import { verifyExecutionContext } from '../packages/ccdb-mcp/src/execution-context.js';
 import { fixture, searchResult } from './helpers.js';
@@ -82,6 +83,70 @@ function parseResponse(text: string) {
   assert.ok(data, text);
   return JSON.parse(data.slice(5));
 }
+test('official Streamable HTTP client initializes, lists and calls tools without sessions', async () => {
+  const f = await fixture((c, r) => {
+    if (c.path !== '/internal/ccdb/mcp/execute') return false;
+    r.end(JSON.stringify(searchResult('http://factor.test')));
+    return true;
+  });
+  const client = new Client({ name: 'streamable-http-interop', version: '1.0.0' });
+  const exchanges: { method: string; status: number }[] = [];
+  try {
+    const app = createHttpApplication(settings(f.base + '/internal/ccdb/mcp/execute'));
+    const transport = new StreamableHTTPClientTransport(new URL(resource), {
+      // Simulate the trusted gateway boundary, never distribute signing keys to hosts.
+      fetch: async (input, init) => {
+        const incoming = new Request(input, init);
+        incoming.headers.set('X-CCDB-Execution-Context', ticket());
+        const response = await app(incoming);
+        exchanges.push({ method: incoming.method, status: response.status });
+        assert.equal(response.headers.get('Mcp-Session-Id'), null);
+        return response;
+      },
+    });
+    await client.connect(transport);
+    const list = await client.listTools();
+    assert.equal(list.tools.length, 2);
+    const result = await client.callTool({
+      name: 'search_emission_factors',
+      arguments: { query: '电力' },
+    });
+    assert.deepEqual(result.structuredContent, searchResult('http://factor.test'));
+    assert.equal(f.calls.length, 1);
+    assert.ok(exchanges.some((e) => e.method === 'POST' && e.status === 202));
+  } finally {
+    await client.close();
+    await f.close();
+  }
+});
+
+test('stateless HTTP rejects session operations and acknowledges notifications with no body', async () => {
+  const app = createHttpApplication(settings('http://127.0.0.1:1/internal/ccdb/mcp/execute'));
+  for (const method of ['GET', 'DELETE']) {
+    const response = await app(
+      new Request(resource, {
+        method,
+        headers: { 'X-CCDB-Execution-Context': ticket() },
+      }),
+    );
+    assert.equal(response.status, 405);
+    assert.match(response.headers.get('Allow') || '', /POST/);
+  }
+  const notification = request('notifications/initialized');
+  const response = await app(
+    new Request(notification, {
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
+    }),
+  );
+  assert.equal(response.status, 202);
+  assert.equal(await response.text(), '');
+  const invalidAccept = request('tools/list');
+  invalidAccept.headers.set('Accept', 'text/html');
+  assert.equal((await app(invalidAccept)).status, 406);
+  const invalidVersion = request('tools/list');
+  invalidVersion.headers.set('MCP-Protocol-Version', '1900-01-01');
+  assert.equal((await app(invalidVersion)).status, 400);
+});
 test('remote rejects unsigned/expired/wrong-resource/tampered context before any tool call', async () => {
   const f = await fixture();
   try {

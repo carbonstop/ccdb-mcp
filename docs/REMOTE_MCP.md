@@ -1,6 +1,20 @@
 # 官方远程 MCP：后端适配与本地验收
 
-状态：代码及定向测试进行中；真实 Gateway → Node → Management → CCDB 全链路尚未验收。以下为配置说明，不代表已经部署或运行。
+状态：Node 已实现无状态 Streamable HTTP。本文末尾的历史本地验收不代表生产已部署；WorkBuddy OAuth 和生产 Gateway → Node → Management → CCDB 仍需在目标环境验收。
+
+## Streamable HTTP 协议与 WorkBuddy 接入
+
+- 启动：配置下文的环境变量后运行 `ccdb-mcp serve`。保留默认 `stdio` 模式，不需要另一个 MCP 仓库或二进制。
+- 宿主连接的是公共 HTTPS 网关 `/mcp/ccdb`，不是内部 Node 地址。WorkBuddy 选择 Streamable HTTP，用户无需先安装 npm 包。OAuth 重定向 URI 和授权方式必须按实际宿主配置核对。
+- `POST /mcp/ccdb` 支持 initialize、tools/list、tools/call。客户端发送 `Accept: application/json, text/event-stream`；初始化后的请求携带协商得到的 `MCP-Protocol-Version`。
+- 通知返回 HTTP 202 空正文；不生成 `Mcp-Session-Id`，不要求会话粘滞。GET/DELETE 返回 405 是无状态模式的预期行为，不表示没有支持 Streamable HTTP。
+- 响应由 SDK 编码为 JSON 或 SSE；当前适配层收集完整结果后返回，以保留内部鉴权失败和限流的 HTTP 401/403/429、Retry-After。当前不提供实时进度推送、服务端订阅、断线事件重放，也不提供旧版 `/sse` + `/messages`。
+- 网关须保留 Accept、Content-Type、MCP-Protocol-Version 以及 SDK 使用的 MCP-Method/MCP-Name 协议头，正确转发响应正文、Content-Type、状态码和 Retry-After。每个请求重新验证用户身份并签发内部上下文；签名密钥不得给宿主或浏览器。
+- 公共未认证请求的 401、WWW-Authenticate 和 `/.well-known/oauth-protected-resource/mcp/ccdb` 发现由网关负责。仅启动 Node 不构成完整的 OAuth 连接器。
+
+自动化验收：`tests/http.test.ts` 使用官方 `StreamableHTTPClientTransport`，通过 Fetch 适配层完成初始化、通知、列工具和查询；另测 405、406、无效协议版本以及按请求身份隔离、撤权、限流。这里不是 WorkBuddy UI、公共 TLS 或真实 OAuth 联调。
+
+协议依据：[MCP Streamable HTTP 传输规范](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)。
 
 ## 请求链路
 

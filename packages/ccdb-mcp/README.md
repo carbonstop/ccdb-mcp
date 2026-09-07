@@ -24,4 +24,10 @@ ccdb-mcp stdio
 
 遇到 401/403/429 不切到旧免授权接口。登录只由用户显式执行命令发起，不在 tools/call 时后台弹浏览器。
 
-远程 HTTP 入口仍需完成并验证后端 audience、鉴权和内部执行适配，stdio 通过不代表远程入口可发布。
+## 远程 Streamable HTTP
+
+配置内部执行地址、网关签名密钥和 Host 白名单后，运行 `ccdb-mcp serve`，通过网关公开 HTTPS `/mcp/ccdb`。此入口已实现无状态 Streamable HTTP，不是旧版 `/sse` + `/messages` 模式；GET/DELETE 返回 405，通知返回 202，不创建会话。
+
+WorkBuddy 等远程宿主连接网关 URL，终端用户无需安装本包。OAuth 发现、用户鉴权和内部签名由网关/Auth 完成；不要公开 Node 端口、向宿主提供签名密钥，或让所有用户共用服务端登录凭证。
+
+完整环境变量与联调要求见 [远程部署说明](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/REMOTE_MCP.md)。官方 SDK 互操作测试通过不代表 WorkBuddy、真实 OAuth 或生产环境已完成验收。
