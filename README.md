@@ -37,7 +37,6 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 ## 远程连接器：Streamable HTTP
 
-唯一目标架构采用 [PR #5](https://github.com/carbonstop/ccdb-mcp/pull/5)：
 
 ```text
 用户授权：WorkBuddy → Gateway/Auth（OAuth + PKCE）
