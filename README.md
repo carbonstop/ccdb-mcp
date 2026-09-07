@@ -37,6 +37,8 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 ## 远程连接器：Streamable HTTP
 
+**后续架构调整（尚未实现/发布）**：WorkBuddy 直接连接 MCP，MCP 的后端请求统一走 Gateway，不再依赖 Management 内网地址。Token 校验及跨资源调用契约尚待后端确认；见 [目标架构与联调前置条件](docs/GATEWAY_BACKED_MCP.md)。以下仍说明当前已实现的 Gateway → MCP 模式，不要将其部署参数与目标模式混用。
+
 远程优先由宿主发起 OAuth 授权（通常为授权码 + PKCE，取决于宿主支持），不是执行本地 device 登录；API Key 是宿主支持配置认证请求头时的手动备选。OAuth 失败时提示用户处理授权，不自动降级为 Key。部署人员不要先执行 device 登录来给所有远程用户共用身份。
 
 `ccdb-mcp serve` 已提供无状态 **Streamable HTTP**，端点为 `/mcp/ccdb`。本地 stdio 与远程 HTTP 共用两个业务工具；不提供旧版 HTTP+SSE 的 `/sse`、`/messages` 双端点。
