@@ -1,6 +1,6 @@
 # 目标架构：宿主直连 MCP，后端统一经 Gateway
 
-状态：架构调整与联调前置说明，不是已实现的新运行模式。当前 main/npm 的 `serve` 仍采用 Gateway 在 MCP 前面的模式。本文替代 PR #4 的直接调用内部认证和 Management 方案；不要合并该草稿后按旧 direct 配置上线。
+状态：架构调整与联调前置说明，不是已实现的新运行模式。当前 main/npm 的 `serve` 仍采用 Gateway 在 MCP 前面的模式。这是唯一采用的远程目标架构。PR #4 的直接调用内部认证和 Management 方案已关闭，不采用；不得按旧 direct 配置上线。
 
 ## 请求链路
 

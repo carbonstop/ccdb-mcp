@@ -37,21 +37,18 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 ## 远程连接器：Streamable HTTP
 
-**后续架构调整（尚未实现/发布）**：WorkBuddy 直接连接 MCP，MCP 的后端请求统一走 Gateway，不再依赖 Management 内网地址。Token 校验及跨资源调用契约尚待后端确认；见 [目标架构与联调前置条件](docs/GATEWAY_BACKED_MCP.md)。以下仍说明当前已实现的 Gateway → MCP 模式，不要将其部署参数与目标模式混用。
+唯一目标架构采用 [PR #5](https://github.com/carbonstop/ccdb-mcp/pull/5)：
 
-远程优先由宿主发起 OAuth 授权（通常为授权码 + PKCE，取决于宿主支持），不是执行本地 device 登录；API Key 是宿主支持配置认证请求头时的手动备选。OAuth 失败时提示用户处理授权，不自动降级为 Key。部署人员不要先执行 device 登录来给所有远程用户共用身份。
-
-`ccdb-mcp serve` 已提供无状态 **Streamable HTTP**，端点为 `/mcp/ccdb`。本地 stdio 与远程 HTTP 共用两个业务工具；不提供旧版 HTTP+SSE 的 `/sse`、`/messages` 双端点。
-
-服务部署方安装 npm 包，按 [远程部署说明](docs/REMOTE_MCP.md) 配置内部执行地址、签名密钥和 Host 白名单，然后运行：
-
-```sh
-ccdb-mcp serve
+```text
+用户授权：WorkBuddy → Gateway/Auth（OAuth + PKCE）
+工具请求：WorkBuddy → 公共 MCP → Gateway → 业务服务
 ```
 
-WorkBuddy 等远程宿主选择 **Streamable HTTP**，填写部署后的 `https://<你的网关域名>/mcp/ccdb`，无需在每个用户电脑安装此 npm 包。该地址是占位示例，不是已上线服务。
+MCP 独立提供协议端点及资源发现，复用现有 Gateway/Auth，不重新实现登录页或发 Token，也不直接调用 Management 内网接口。远程优先宿主 OAuth；API Key 是宿主支持认证请求头时的显式备选，不自动降级。
 
-必须通过网关完成 OAuth/API Key 鉴权、按用户签发内部上下文，再转发给 Node；不能直接公开 Node 端口，也不能让所有用户共用服务进程的一份登录凭证。OAuth 发现和授权由网关/Auth 提供，不由 `serve` 独立提供。协议互操作测试不等于 WorkBuddy 或生产后端已联调完成。
+**实现状态：该目标调用链尚未实现，不能通过当前 npm 包的环境变量启用。** Token 校验、资源绑定和下游调用契约需先确认，见 [架构与接入前置条件](docs/GATEWAY_BACKED_MCP.md)。PR #4 的 direct-Management 草稿已关闭，不采用该方案。
+
+当前版本的 `serve` 仍是旧 Gateway-first 实现，仅保留用于已有部署的兼容；[历史部署说明](docs/REMOTE_MCP.md) 不是目标架构的配置指南。新部署请等待目标模式实现及验收，不要混用两者参数。
 
 ## 配置本地 stdio MCP 宿主
 
@@ -106,7 +103,7 @@ stdio 启动不自动弹浏览器，也不向协议 stdout 打印日志；未登
 
 See [configuration](docs/CONFIGURATION.md), [migration](docs/MIGRATION.md), and [factor guidance](docs/FACTOR_GUIDANCE.md).
 
-Remote deployment: [gateway and internal adapter](docs/REMOTE_MCP.md). Do not expose `serve` directly to the public Internet.
+远程接入以 [目标架构说明](docs/GATEWAY_BACKED_MCP.md) 为准；当前版本的 `serve` 不可直接暴露公网。
 
 ## 开发
 
