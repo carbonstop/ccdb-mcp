@@ -31,7 +31,7 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 业务工具只有 search_emission_factors 和 get_emission_factor_detail。成功返回原始 CCDB JSON 和 structuredContent；不依赖大模型 Key，不自动做建模写入，不将原始候选铺成最终推荐卡片。
 
-本地默认端口仅在 CCDB_PROFILE=local 时生效：网关 8880、Agent 3100。OAuth 客户端默认 ccdb-connect-local，需在对应环境登记。
+环境与 OAuth 客户端配置见 [配置说明](docs/CONFIGURATION.md)。
 
 遇到 401/403/429 不切到旧免授权接口。登录只由用户显式执行命令发起，不在 tools/call 时后台弹浏览器。
 
@@ -52,18 +52,6 @@ ccdb-mcp serve
 WorkBuddy 等远程宿主选择 **Streamable HTTP**，填写部署后的 `https://<你的网关域名>/mcp/ccdb`，无需在每个用户电脑安装此 npm 包。该地址是占位示例，不是已上线服务。
 
 必须通过网关完成 OAuth/API Key 鉴权、按用户签发内部上下文，再转发给 Node；不能直接公开 Node 端口，也不能让所有用户共用服务进程的一份登录凭证。OAuth 发现和授权由网关/Auth 提供，不由 `serve` 独立提供。协议互操作测试不等于 WorkBuddy 或生产后端已联调完成。
-
-## 从源码开发（仅开发人员）
-
-在克隆的仓库根目录运行，普通用户不需要这些步骤：
-
-```sh
-npm ci
-npm run verify
-npm install -g ./dist/releases/ccdb-mcp-server-2.0.0.tgz
-```
-
-最后一行安装刚构建的本地开发包，不是 npm registry 安装。构建不会自动发布 npm。
 
 ## 配置本地 stdio MCP 宿主
 
@@ -86,9 +74,9 @@ ccdb-mcp status --json
 }
 ```
 
-OAuth 客户端需在目标环境登记；如管理员提供不同 client_id，登录和宿主配置必须使用同一值。本地后端联调才使用 `CCDB_PROFILE=local`，并先执行 `ccdb-mcp login --profile local`。
+OAuth 客户端需在目标环境登记；如管理员提供不同 client_id，登录和宿主配置必须使用同一值。本地调试见 [开发指南](docs/DEVELOPMENT.md)。
 
-Windows 上宿主不能直接执行 npm `.cmd` 时，可改为 `command: "node"`，`args` 使用已安装包的 `dist/main.mjs` 绝对路径再跟 `stdio`，保持登录与宿主环境一致。stdio 不接收额外命令参数。开发中可直接指向本仓库 `packages/ccdb-mcp/dist/main.mjs`。不要把 Key 写入聊天、仓库或公开配置。
+Windows 上宿主不能直接执行 npm `.cmd` 时，可改为 `command: "node"`，`args` 使用已安装包的 `dist/main.mjs` 绝对路径再跟 `stdio`，保持登录与宿主环境一致。stdio 不接收额外命令参数。不要把 Key 写入聊天、仓库或公开配置。
 
 MCP 仅公开两个只读工具：
 
@@ -119,3 +107,12 @@ stdio 启动不自动弹浏览器，也不向协议 stdout 打印日志；未登
 See [configuration](docs/CONFIGURATION.md), [migration](docs/MIGRATION.md), and [factor guidance](docs/FACTOR_GUIDANCE.md).
 
 Remote deployment: [gateway and internal adapter](docs/REMOTE_MCP.md). Do not expose `serve` directly to the public Internet.
+
+## 开发
+
+```sh
+npm ci
+npm run verify
+```
+
+源码包安装和本地调试见 [开发指南](docs/DEVELOPMENT.md)。
