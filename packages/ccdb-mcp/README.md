@@ -31,7 +31,7 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 业务工具只有 search_emission_factors 和 get_emission_factor_detail。成功返回原始 CCDB JSON 和 structuredContent；不依赖大模型 Key，不自动做建模写入，不将原始候选铺成最终推荐卡片。
 
-本地默认端口仅在 CCDB_PROFILE=local 时生效：网关 8880、Agent 3100。OAuth 客户端默认 ccdb-connect-local，需在对应环境登记。
+环境与 OAuth 客户端配置见 [配置说明](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/CONFIGURATION.md)。
 
 遇到 401/403/429 不切到旧免授权接口。登录只由用户显式执行命令发起，不在 tools/call 时后台弹浏览器。
 
