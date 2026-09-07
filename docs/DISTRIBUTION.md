@@ -15,4 +15,4 @@ npm login --registry=https://registry.npmjs.org/
 npm publish ./dist/releases/ccdb-mcp-server-2.0.0.tgz --access public --registry=https://registry.npmjs.org/
 ```
 
-The npm account must own this package (the current registry maintainer is `carbonstop-official`) or have publishing permission. Never publish the private repository root or `ccdb-client` workspace. This does not deploy the remote gateway/backend. Package publication is not performed by build/test/CI.
+The npm account must own this package (the current registry maintainer is `carbonstop-official`) or have publishing permission. Never publish the private development root. The `ccdb-client` npm dependency is bundled during build and released separately from its own repository. This does not deploy the remote gateway/backend. Package publication is not performed by build/test/CI.

@@ -18,8 +18,11 @@ Node.js 22+ and backend OAuth/API Key permission are required. Update host confi
 
 ## Independent maintenance
 
-This repo builds and packs without CLI or integrations checkouts. `packages/ccdb-client` is private vendored source bundled into the published artifact. The login runner/output helpers now live in `packages/ccdb-mcp/src`; they are not an external CLI dependency.
-Authentication, HTTP, contract and credential-store fixes must be ported to `carbonstop/ccdb-cli` with linked PRs and full verification on both repositories. Runner/output changes affecting login or JSON behavior must also be compared. Keeping two copies is an explicit maintenance tradeoff, not automatic synchronization.
+This repo builds and packs without CLI, integrations or client checkouts. Shared authentication, HTTP, contracts and credential storage are maintained in `carbonstop/ccdb-client` and consumed from the public npm package [`ccdb-client`](https://www.npmjs.com/package/ccdb-client). The root build dependency is pinned to `0.1.0`; private GitHub source access is not required. There is no vendored client workspace to synchronize. The login runner/output helpers remain in `packages/ccdb-mcp/src`; they are not an external CLI dependency.
+
+Fix shared logic in the client repository and publish a client version first. Update the dependency and lockfile in MCP and CLI through linked upgrade PRs, then run both complete verification suites. Keep consumer authentication, callback, contract and error-redaction tests against the published package. Runner/output changes affecting login or JSON behavior must still be compared because those helpers remain consumer-owned.
+
+The build bundles the pinned client and includes its MIT license in third-party notices. End users do not install the client separately. MCP and CLI releases remain independent; publishing client alone does not update already installed consumers. Client extraction does not change the HTTP deployment or OAuth architecture.
 
 Run `npm ci` and `npm run verify`. CI tests mock services, real SDK stdio exchange, signed internal HTTP context, and isolated offline tarball installation. This does not substitute for real-host, production OAuth, keychain, revocation or two-user quota/audit acceptance.
 

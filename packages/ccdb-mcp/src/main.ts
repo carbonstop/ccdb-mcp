@@ -1,6 +1,6 @@
 import { startStdio } from './stdio.js';
 import { runCli } from './runner.js';
-import { asError, exitCode } from '../../ccdb-client/src/errors.js';
+import { asError, exitCode } from 'ccdb-client/errors';
 import { startHttp } from './http.js';
 const args = process.argv.slice(2);
 const command = args[0] || 'stdio';

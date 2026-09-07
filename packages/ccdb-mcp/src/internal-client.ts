@@ -7,7 +7,7 @@ import {
   type FactorClient,
   type SearchRequest,
   CcdbError,
-} from '../../ccdb-client/src/index.js';
+} from 'ccdb-client';
 /** Only the current signed context is forwarded. No external Key/Bearer or shared admin identity. */
 export class InternalFactorClient implements FactorClient {
   constructor(

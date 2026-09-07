@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { searchSchema, detailInputSchema } from '../packages/ccdb-client/src/contracts.js';
+import { searchSchema, detailInputSchema } from 'ccdb-client/contracts';
 
 test('user-facing READMEs install the published MCP package first', async () => {
   const pkg = JSON.parse(await readFile('packages/ccdb-mcp/package.json', 'utf8'));

@@ -38,4 +38,6 @@ for (const directory of ['packages/ccdb-mcp/dist']) {
   await mkdir(resolve(root, directory), { recursive: true });
   await writeFile(resolve(root, directory, 'THIRD_PARTY_NOTICES.txt'), notices);
 }
-console.log('Built independent MCP bundle. No external ccdb-client dependency.');
+console.log(
+  'Built independent MCP bundle. Includes the pinned ccdb-client npm dependency; no separate runtime install.',
+);

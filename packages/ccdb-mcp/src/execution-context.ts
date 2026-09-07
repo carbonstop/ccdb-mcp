@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { CcdbError } from '../../ccdb-client/src/errors.js';
+import { CcdbError } from 'ccdb-client/errors';
 
 /** Gateway-issued internal ticket. This is NOT a public OAuth access token. */
 const claimsSchema = z
