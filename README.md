@@ -2,13 +2,19 @@
 
 npm 包保持 `ccdb-mcp-server`，命令保持 `ccdb-mcp`，新版为 2.0.0。仅提供普通 npm 包，不需要另装 CLI。发布流程见 [分发说明](docs/DISTRIBUTION.md)。
 
-独立 Node.js 22+ MCP 包，当前提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。开发包尚未发布到 npm。
+独立 Node.js 22+ MCP 包，提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。已发布 [ccdb-mcp-server@2.0.0](https://www.npmjs.com/package/ccdb-mcp-server)。
+
+## 从 npm 安装（推荐）
 
 ```sh
+npm install -g ccdb-mcp-server
+ccdb-mcp --version
 ccdb-mcp login --method device --no-browser
 ccdb-mcp status --json
 ccdb-mcp stdio
 ```
+
+需要固定版本时使用 `npm install -g ccdb-mcp-server@2.0.0`。镜像未同步时可追加 `--registry=https://registry.npmjs.org/`。2.x 的认证与工具接口不兼容旧 1.x，升级前请阅读 [迁移说明](docs/MIGRATION.md)。
 
 宿主以 stdio 启动本命令，并设置 CCDB_PROFILE 和可选 CCDB_API_KEY。API Key 与已保存 OAuth 凭证二选一使用，显式环境 Key 优先。
 
@@ -20,21 +26,23 @@ ccdb-mcp stdio
 
 远程 HTTP 入口仍需完成并验证后端 audience、鉴权和内部执行适配，stdio 通过不代表远程入口可发布。
 
-## Development
+## 从源码开发（仅开发人员）
+
+在克隆的仓库根目录运行，普通用户不需要这些步骤：
 
 ```sh
 npm ci
 npm run verify
+npm install -g ./dist/releases/ccdb-mcp-server-2.0.0.tgz
 ```
 
-Node.js 22+. Build and pack are local; no npm publication is performed.
+最后一行安装刚构建的本地开发包，不是 npm registry 安装。构建不会自动发布 npm。
 
-## 只安装 MCP
+## 配置 MCP 宿主
 
 ```powershell
-npm install -g ./dist/releases/ccdb-mcp-server-2.0.0.tgz
-ccdb-mcp login --profile local
-ccdb-mcp status --profile local --json
+ccdb-mcp login
+ccdb-mcp status --json
 ```
 
 在支持 stdio MCP 的宿主中配置（通用配置示例，宿主具体字段以其设置为准）：
@@ -45,13 +53,15 @@ ccdb-mcp status --profile local --json
     "ccdb-mcp": {
       "command": "ccdb-mcp",
       "args": ["stdio"],
-      "env": { "CCDB_PROFILE": "local", "CCDB_CLIENT_ID": "ccdb-connect-local" }
+      "env": { "CCDB_PROFILE": "production", "CCDB_CLIENT_ID": "ccdb-connect-local" }
     }
   }
 }
 ```
 
-Windows 上宿主不能直接执行 npm `.cmd` 时，可改为 `command: "node"`，`args` 使用已安装包的 `dist/main.mjs` 绝对路径再跟 `stdio`，环境使用 `CCDB_PROFILE=local`。stdio 不接收额外命令参数。开发中可直接指向本仓库 `packages/ccdb-mcp/dist/main.mjs`。不要把 Key 写入聊天、仓库或公开配置。
+OAuth 客户端需在目标环境登记；如管理员提供不同 client_id，登录和宿主配置必须使用同一值。本地后端联调才使用 `CCDB_PROFILE=local`，并先执行 `ccdb-mcp login --profile local`。
+
+Windows 上宿主不能直接执行 npm `.cmd` 时，可改为 `command: "node"`，`args` 使用已安装包的 `dist/main.mjs` 绝对路径再跟 `stdio`，保持登录与宿主环境一致。stdio 不接收额外命令参数。开发中可直接指向本仓库 `packages/ccdb-mcp/dist/main.mjs`。不要把 Key 写入聊天、仓库或公开配置。
 
 MCP 仅公开两个只读工具：
 

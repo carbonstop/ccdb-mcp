@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { searchSchema, detailInputSchema } from '../packages/ccdb-client/src/contracts.js';
 
+test('user-facing READMEs install the published MCP package first', async () => {
+  const pkg = JSON.parse(await readFile('packages/ccdb-mcp/package.json', 'utf8'));
+  for (const file of ['README.md', 'packages/ccdb-mcp/README.md']) {
+    const doc = await readFile(file, 'utf8');
+    assert.equal(/npm install -g (\S+)/.exec(doc)?.[1], pkg.name, file);
+    assert.ok(doc.includes(`${Object.keys(pkg.bin)[0]} --version`), file);
+  }
+});
+
 test('handoff JSON examples match installed tool contracts and stdio startup options', async () => {
   let examples = 0;
   for (const file of ['README.md', 'docs/REMOTE_MCP.md']) {
@@ -21,7 +30,8 @@ test('handoff JSON examples match installed tool contracts and stdio startup opt
       if (value.mcpServers) {
         const server = value.mcpServers['ccdb-mcp'];
         assert.deepEqual(server.args, ['stdio']);
-        assert.equal(server.env.CCDB_PROFILE, 'local');
+        assert.ok(['local', 'production'].includes(server.env.CCDB_PROFILE));
+        assert.equal(server.command, 'ccdb-mcp');
       }
     }
   }

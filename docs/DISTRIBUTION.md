@@ -4,7 +4,7 @@ Package name remains `ccdb-mcp-server`; executable remains `ccdb-mcp`. Version `
 
 The earlier migration draft's scoped package `@carbonstop/ccdb-mcp` and `ccdb-connect-mcp` command are superseded; they were not published by this migration. OAuth registration and credential-store identifiers remain unchanged.
 
-After release, install `npm install -g ccdb-mcp-server@2.0.0`, explicitly run `ccdb-mcp login`, and configure the host command `ccdb-mcp` with `args: ["stdio"]`. Tools/authentication and `serve` are not drop-in compatible with the legacy package; see [MIGRATION.md](MIGRATION.md).
+Version 2.0.0 is published. Install `npm install -g ccdb-mcp-server` (or pin `ccdb-mcp-server@2.0.0`), explicitly run `ccdb-mcp login`, and configure the host command `ccdb-mcp` with `args: ["stdio"]`. Tools/authentication and `serve` are not drop-in compatible with the legacy package; see [MIGRATION.md](MIGRATION.md).
 
 Release only after company/license approval, backend acceptance and package review:
 

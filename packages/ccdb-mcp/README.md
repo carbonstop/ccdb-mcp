@@ -2,13 +2,19 @@
 
 npm 包：`ccdb-mcp-server@2.0.0`；命令：`ccdb-mcp`。与旧 1.x 保持名称，不保证工具接口兼容。
 
-独立 Node.js 22+ MCP 包，当前提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。开发包尚未发布到 npm。
+独立 Node.js 22+ MCP 包，提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。
+
+## 从 npm 安装
 
 ```sh
+npm install -g ccdb-mcp-server
+ccdb-mcp --version
 ccdb-mcp login --method device --no-browser
 ccdb-mcp status --json
 ccdb-mcp stdio
 ```
+
+固定版本：`npm install -g ccdb-mcp-server@2.0.0`。镜像未同步时追加 `--registry=https://registry.npmjs.org/`。数据库访问仍需有效授权和可用后端。
 
 宿主以 stdio 启动本命令，并设置 CCDB_PROFILE 和可选 CCDB_API_KEY。API Key 与已保存 OAuth 凭证二选一使用，显式环境 Key 优先。
 
