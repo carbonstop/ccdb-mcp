@@ -1,0 +1,25 @@
+{
+  "name": "ccdb-mcp-server",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "CCDB Connect MCP server with authenticated factor search and details",
+  "bin": {
+    "ccdb-mcp": "dist/main.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carbonstop/ccdb-mcp.git",
+    "directory": "packages/ccdb-mcp"
+  }
+}
