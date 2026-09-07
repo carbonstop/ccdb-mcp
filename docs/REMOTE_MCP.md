@@ -8,7 +8,7 @@
 外部宿主 → Gateway /mcp/ccdb
   校验 MCP audience 的 OAuth Token 或 CCDB_AGENT Key
   删除外部凭证和身份头，生成最长 60 秒内部签名票据
-    → Node ccdb-connect-mcp serve
+    → Node ccdb-mcp serve
       验签；握手/列工具不调用 Management
       tools/call → Management /internal/ccdb/mcp/execute
         验签、当前授权/Key、AgentBase 成员、scope、单次票据、资源配额

@@ -19,7 +19,7 @@ test('handoff JSON examples match installed tool contracts and stdio startup opt
         examples++;
       }
       if (value.mcpServers) {
-        const server = value.mcpServers['ccdb-connect'];
+        const server = value.mcpServers['ccdb-mcp'];
         assert.deepEqual(server.args, ['stdio']);
         assert.equal(server.env.CCDB_PROFILE, 'local');
       }

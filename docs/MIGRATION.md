@@ -7,7 +7,7 @@ This PR replaces the legacy implementation without rewriting history or removing
 
 | Legacy                                       | New                                                                                         |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| npm `ccdb-mcp-server`, executable `ccdb-mcp` | npm `@carbonstop/ccdb-mcp`, executable `ccdb-connect-mcp` (not published by this PR)        |
+| npm `ccdb-mcp-server`, executable `ccdb-mcp` | npm `ccdb-mcp-server`, executable `ccdb-mcp` (not published by this PR)                     |
 | `--stdio`                                    | `stdio` (also the default)                                                                  |
 | `--http --port`                              | Internal `serve` adapter behind the authenticated gateway; not a drop-in public HTTP server |
 | `search_factors`, `search_factors_json`      | `search_emission_factors`                                                                   |

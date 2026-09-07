@@ -1,11 +1,13 @@
 # CCDB Connect MCP
 
+npm 包：`ccdb-mcp-server@2.0.0`；命令：`ccdb-mcp`。与旧 1.x 保持名称，不保证工具接口兼容。
+
 独立 Node.js 22+ MCP 包，当前提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。开发包尚未发布到 npm。
 
 ```sh
-ccdb-connect-mcp login --method device --no-browser
-ccdb-connect-mcp status --json
-ccdb-connect-mcp stdio
+ccdb-mcp login --method device --no-browser
+ccdb-mcp status --json
+ccdb-mcp stdio
 ```
 
 宿主以 stdio 启动本命令，并设置 CCDB_PROFILE 和可选 CCDB_API_KEY。API Key 与已保存 OAuth 凭证二选一使用，显式环境 Key 优先。

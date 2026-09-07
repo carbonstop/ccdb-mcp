@@ -10,15 +10,15 @@ import {
 import { interactiveLogin } from '../../ccdb-client/src/auth/interactive.js';
 import { humanOutput } from './output.js';
 
-const HELP = `CCDB Connect 0.1.0 — CCDB 因子查询工具（Node.js 22+）
+const HELP = `CCDB Connect 2.0.0 — CCDB 因子查询工具（Node.js 22+）
 
-ccdb-connect auth login [--method device|pkce|api-key] [--no-browser]
-ccdb-connect auth status
-ccdb-connect auth logout [--revoke]
-ccdb-connect factor search <query> [--language zh|en] [--accounting-type product|enterprise]
+ccdb-mcp auth login [--method device|pkce|api-key] [--no-browser]
+ccdb-mcp auth status
+ccdb-mcp auth logout [--revoke]
+ccdb-mcp factor search <query> [--language zh|en] [--accounting-type product|enterprise]
   [--country 中国] [--year 2025] [--source-level 国家排放因子] [--limit 5]
-ccdb-connect factor detail <factorId> [--language zh|en]
-ccdb-connect doctor
+ccdb-mcp factor detail <factorId> [--language zh|en]
+ccdb-mcp doctor
 
 公共选项：--profile local|pre|production|自定义  --json  --timeout <毫秒>
 筛选项可重复传入；factorId 必须原样使用字符串。
@@ -63,9 +63,7 @@ export async function runCli(
     }
     if (v.version) {
       process.stdout.write(
-        v.json
-          ? JSON.stringify({ name: 'ccdb-connect', version: '0.1.0' }) + '\n'
-          : 'ccdb-connect 0.1.0\n',
+        v.json ? JSON.stringify({ name: 'ccdb-mcp', version: '2.0.0' }) + '\n' : 'ccdb-mcp 2.0.0\n',
       );
       return 0;
     }

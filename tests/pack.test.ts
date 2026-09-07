@@ -24,7 +24,7 @@ test('npm tgz packages install offline into fresh directories without shared wor
   assert.ok(process.env.npm_execpath, 'Run using npm test');
   for (const name of ['mcp']) {
     const directory = await mkdtemp(join(tmpdir(), `ccdb-pack-${name}-`));
-    const archive = resolve(`dist/releases/carbonstop-ccdb-${name}-0.1.0.tgz`);
+    const archive = resolve('dist/releases/ccdb-mcp-server-2.0.0.tgz');
     const install = await run(
       process.execPath,
       [
@@ -40,9 +40,14 @@ test('npm tgz packages install offline into fresh directories without shared wor
       directory,
     );
     assert.equal(install.code, 0, install.err);
-    const installed = join(directory, `node_modules/@carbonstop/ccdb-${name}/dist/main.mjs`);
+    const metadata = JSON.parse(
+      await readFile(join(directory, 'node_modules/ccdb-mcp-server/package.json'), 'utf8'),
+    );
+    assert.deepEqual(metadata.bin, { 'ccdb-mcp': 'dist/main.mjs' });
+    assert.equal(metadata.version, '2.0.0');
+    const installed = join(directory, 'node_modules/ccdb-mcp-server/dist/main.mjs');
     const result = await run(process.execPath, [installed, '--version'], directory);
     assert.equal(result.code, 0, result.err);
-    assert.match(result.out, /0\.1\.0/);
+    assert.match(result.out, /ccdb-mcp 2\.0\.0/);
   }
 });

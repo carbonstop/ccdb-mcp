@@ -1,11 +1,13 @@
 # CCDB Connect MCP
 
+npm 包保持 `ccdb-mcp-server`，命令保持 `ccdb-mcp`，新版为 2.0.0。仅提供普通 npm 包，不需要另装 CLI。发布流程见 [分发说明](docs/DISTRIBUTION.md)。
+
 独立 Node.js 22+ MCP 包，当前提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。开发包尚未发布到 npm。
 
 ```sh
-ccdb-connect-mcp login --method device --no-browser
-ccdb-connect-mcp status --json
-ccdb-connect-mcp stdio
+ccdb-mcp login --method device --no-browser
+ccdb-mcp status --json
+ccdb-mcp stdio
 ```
 
 宿主以 stdio 启动本命令，并设置 CCDB_PROFILE 和可选 CCDB_API_KEY。API Key 与已保存 OAuth 凭证二选一使用，显式环境 Key 优先。
@@ -30,9 +32,9 @@ Node.js 22+. Build and pack are local; no npm publication is performed.
 ## 只安装 MCP
 
 ```powershell
-npm install -g ./dist/releases/carbonstop-ccdb-mcp-0.1.0.tgz
-ccdb-connect-mcp login --profile local
-ccdb-connect-mcp status --profile local --json
+npm install -g ./dist/releases/ccdb-mcp-server-2.0.0.tgz
+ccdb-mcp login --profile local
+ccdb-mcp status --profile local --json
 ```
 
 在支持 stdio MCP 的宿主中配置（通用配置示例，宿主具体字段以其设置为准）：
@@ -40,8 +42,8 @@ ccdb-connect-mcp status --profile local --json
 ```json
 {
   "mcpServers": {
-    "ccdb-connect": {
-      "command": "ccdb-connect-mcp",
+    "ccdb-mcp": {
+      "command": "ccdb-mcp",
       "args": ["stdio"],
       "env": { "CCDB_PROFILE": "local", "CCDB_CLIENT_ID": "ccdb-connect-local" }
     }
