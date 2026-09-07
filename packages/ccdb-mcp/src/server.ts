@@ -11,7 +11,7 @@ import {
   detailResponseSchema,
   asError,
   type FactorClient,
-} from '../../ccdb-client/src/index.js';
+} from 'ccdb-client';
 
 export const toolErrorSchema = z.object({
   error: z.object({

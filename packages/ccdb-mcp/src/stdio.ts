@@ -1,5 +1,5 @@
 import { serveStdio, StdioServerTransport } from '@modelcontextprotocol/server/stdio';
-import { CcdbClient, config, asError } from '../../ccdb-client/src/index.js';
+import { CcdbClient, config, asError } from 'ccdb-client';
 import { createServer } from './server.js';
 export function startStdio(env: NodeJS.ProcessEnv = process.env) {
   const client = new CcdbClient(config(env));

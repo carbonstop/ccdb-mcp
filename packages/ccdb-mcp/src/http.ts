@@ -1,6 +1,6 @@
 import { createServer as nodeServer } from 'node:http';
 import { createMcpHandler } from '@modelcontextprotocol/server';
-import { CcdbError, asError, validUrl } from '../../ccdb-client/src/index.js';
+import { CcdbError, asError, validUrl } from 'ccdb-client';
 import {
   verifyExecutionContext,
   parseVerificationKeys,
