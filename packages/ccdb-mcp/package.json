@@ -1,0 +1,24 @@
+{
+  "name": "@carbonstop/ccdb-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "CCDB Connect MCP server with authenticated factor search and details",
+  "bin": {
+    "ccdb-connect-mcp": "dist/main.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carbonstop/ccdb-mcp.git",
+    "directory": "packages/ccdb-mcp"
+  }
+}
