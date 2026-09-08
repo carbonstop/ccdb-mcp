@@ -149,3 +149,6 @@ npm run verify
 ```
 
 源码包安装和本地调试见 [开发指南](docs/DEVELOPMENT.md)。
+
+
+默认凭证目录为 `~/.config/carbonstop/ccdb/`（支持系统配置根目录覆盖）。旧目录已有的身份继续沿用原文件和锁，不复制 Token；新身份写入新目录。`CCDB_CONFIG_DIR` 可显式指定独立目录。

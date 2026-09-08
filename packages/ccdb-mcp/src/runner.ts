@@ -4,7 +4,7 @@ import { appConfig } from './config.js';
 import { interactiveLogin } from 'ccdb-client/auth/interactive';
 import { humanOutput } from './output.js';
 
-const HELP = `CCDB Connect 2.0.1 — CCDB 因子查询工具（Node.js 22+）
+const HELP = `CCDB Connect 2.0.2 — CCDB 因子查询工具（Node.js 22+）
 
 ccdb-mcp auth login [--method device|pkce|api-key] [--no-browser]
 ccdb-mcp auth status
@@ -57,7 +57,7 @@ export async function runCli(
     }
     if (v.version) {
       process.stdout.write(
-        v.json ? JSON.stringify({ name: 'ccdb-mcp', version: '2.0.1' }) + '\n' : 'ccdb-mcp 2.0.1\n',
+        v.json ? JSON.stringify({ name: 'ccdb-mcp', version: '2.0.2' }) + '\n' : 'ccdb-mcp 2.0.2\n',
       );
       return 0;
     }
