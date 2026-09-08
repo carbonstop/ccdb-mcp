@@ -3,11 +3,47 @@ import assert from 'node:assert/strict';
 import { createHmac, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
-import { createHttpApplication, type HttpConfig } from '../packages/ccdb-mcp/src/http.js';
+import {
+  createHttpApplication,
+  httpConfig,
+  type HttpConfig,
+} from '../packages/ccdb-mcp/src/http.js';
 import { verifyExecutionContext } from '../packages/ccdb-mcp/src/execution-context.js';
 import { fixture, searchResult } from './helpers.js';
 const key = randomBytes(32),
   resource = 'http://127.0.0.1:3400/mcp/ccdb';
+
+test('gateway-first config executes only against configured Gateway with per-request ticket', async () => {
+  const resource = 'https://gateway.example/mcp/ccdb';
+  const endpoint = 'https://gateway.example/internal/ccdb/mcp/execute';
+  const config = httpConfig({
+    CCDB_MCP_RESOURCE: resource,
+    CCDB_MCP_EXECUTION_URL: endpoint,
+    CCDB_MCP_CONTEXT_KEYS: JSON.stringify({ v1: key.toString('base64') }),
+    CCDB_MCP_ALLOWED_HOSTS: 'gateway.example',
+  });
+  let calls = 0;
+  const app = createHttpApplication(config, async (input, init) => {
+    const outgoing = new Request(input, init);
+    assert.equal(outgoing.url, endpoint);
+    assert.equal(outgoing.headers.get('Authorization'), null);
+    assert.equal(outgoing.headers.get('X-API-Key'), null);
+    assert.ok(outgoing.headers.get('X-CCDB-Execution-Context'));
+    calls++;
+    return Response.json(searchResult('https://factor.example'));
+  });
+  const incoming = request(
+    'tools/call',
+    {
+      name: 'search_emission_factors',
+      arguments: { query: '电力' },
+    },
+    ticket({ sourceResource: resource }),
+  );
+  const response = await app(new Request(resource, incoming));
+  assert.equal(response.status, 200);
+  assert.equal(calls, 1);
+});
 test('Java-signed internal context interoperates with Node without Long precision loss', async () => {
   // Exported by CcdbMcpContextInteropTest: fixed test key and a token expired in 2023, never a real credential.
   const fixture = JSON.parse(
