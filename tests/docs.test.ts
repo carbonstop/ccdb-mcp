@@ -28,7 +28,8 @@ test('user-facing READMEs install the published MCP package first', async () => 
   const pkg = JSON.parse(await readFile('packages/ccdb-mcp/package.json', 'utf8'));
   for (const file of ['README.md', 'packages/ccdb-mcp/README.md']) {
     const doc = await readFile(file, 'utf8');
-    assert.equal(/npm install -g (\S+)/.exec(doc)?.[1], pkg.name, file);
+    const installTarget = /npm install -g (\S+)/.exec(doc)?.[1];
+    assert.ok([pkg.name, `${pkg.name}@latest`].includes(installTarget || ''), file);
     assert.ok(doc.includes(`${Object.keys(pkg.bin)[0]} --version`), file);
   }
 });

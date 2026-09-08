@@ -1,17 +1,17 @@
 # CCDB Connect MCP
 
-npm 包保持 `ccdb-mcp-server`，命令保持 `ccdb-mcp`，新版为 2.0.0。仅提供普通 npm 包，不需要另装 CLI。发布流程见 [分发说明](docs/DISTRIBUTION.md)。
+npm 包保持 `ccdb-mcp-server`，命令保持 `ccdb-mcp`。仅提供普通 npm 包，不需要另装 CLI。发布流程见 [分发说明](docs/DISTRIBUTION.md)。
 
-独立 Node.js 22+ MCP 包，提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。已发布 [ccdb-mcp-server@2.0.0](https://www.npmjs.com/package/ccdb-mcp-server)。
+独立 Node.js 22+ MCP 包，提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。已发布 [ccdb-mcp-server](https://www.npmjs.com/package/ccdb-mcp-server)。
 
 ## 从 npm 安装（推荐）
 
 ```sh
-npm install -g ccdb-mcp-server
+npm install -g ccdb-mcp-server@latest
 ccdb-mcp --version
 ```
 
-需要固定版本时使用 `npm install -g ccdb-mcp-server@2.0.0`。镜像未同步时可追加 `--registry=https://registry.npmjs.org/`。2.x 的认证与工具接口不兼容旧 1.x，升级前请阅读 [迁移说明](docs/MIGRATION.md)。
+安装或升级均使用上述命令，获取 npm latest。镜像未同步时可追加 `--registry=https://registry.npmjs.org/`。旧版的认证与工具接口可能不兼容，升级前请阅读 [迁移说明](docs/MIGRATION.md)。
 
 ## 本地 stdio：默认 device OAuth，API Key 为备选
 
