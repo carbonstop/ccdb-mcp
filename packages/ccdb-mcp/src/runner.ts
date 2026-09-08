@@ -42,7 +42,7 @@ export async function runCli(
     }
     if (v.version) {
       process.stdout.write(
-        v.json ? JSON.stringify({ name: 'ccdb-mcp', version: '2.0.2' }) + '\n' : 'ccdb-mcp 2.0.2\n',
+        v.json ? JSON.stringify({ name: 'ccdb-mcp', version: '2.0.3' }) + '\n' : 'ccdb-mcp 2.0.3\n',
       );
       return 0;
     }

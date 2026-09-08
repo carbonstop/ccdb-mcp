@@ -48,7 +48,7 @@ export async function toolResult(
 }
 export function createServer(client: FactorClient, context?: McpRequestContext): McpServer {
   const server = new McpServer(
-    { name: 'ccdb-mcp-server', version: '2.0.2' },
+    { name: 'ccdb-mcp-server', version: '2.0.3' },
     {
       capabilities: { tools: {} },
       instructions:
