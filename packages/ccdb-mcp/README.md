@@ -32,6 +32,8 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 业务工具只有 search_emission_factors 和 get_emission_factor_detail。成功返回原始 CCDB JSON 和 structuredContent；不依赖大模型 Key，不自动做建模写入，不将原始候选铺成最终推荐卡片。
 
+链接展示：工具描述和 Server instructions 会引导宿主在搜索、详情及比较结果中保留因子的可点击详情链接；工具结果也会附加基于返回地址生成的 Markdown 链接文本，原始 JSON 不变。缺失或明显包含凭证的地址不生成附加链接，不承诺受限数值可解锁。最终是否渲染链接由宿主决定，无需额外安装 Skill 才能收到这些指引。
+
 环境与 OAuth 客户端配置见 [配置说明](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/CONFIGURATION.md)。
 
 遇到 401/403/429 不切到旧免授权接口。登录只由用户显式执行命令发起，不在 tools/call 时后台弹浏览器。
