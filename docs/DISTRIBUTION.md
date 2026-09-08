@@ -4,7 +4,7 @@ Package name remains `ccdb-mcp-server`; executable remains `ccdb-mcp`. Version `
 
 The earlier migration draft's scoped package `@carbonstop/ccdb-mcp` and `ccdb-connect-mcp` command are superseded; they were not published by this migration. OAuth registration and credential-store identifiers remain unchanged.
 
-Version 2.0.0 is published. Install `npm install -g ccdb-mcp-server` (or pin `ccdb-mcp-server@2.0.0`), explicitly run `ccdb-mcp login`, and configure the host command `ccdb-mcp` with `args: ["stdio"]`. Tools/authentication and `serve` are not drop-in compatible with the legacy package; see [MIGRATION.md](MIGRATION.md).
+Install `npm install -g ccdb-mcp-server`, explicitly run `ccdb-mcp login`, and configure the host command `ccdb-mcp` with `args: ["stdio"]`. Tools/authentication and `serve` are not drop-in compatible with the legacy package; see [MIGRATION.md](MIGRATION.md).
 
 Release only after company/license approval, backend acceptance and package review:
 
@@ -12,7 +12,7 @@ Release only after company/license approval, backend acceptance and package revi
 npm ci
 npm run verify
 npm login --registry=https://registry.npmjs.org/
-npm publish ./dist/releases/ccdb-mcp-server-2.0.0.tgz --access public --registry=https://registry.npmjs.org/
+npm publish ./dist/releases/ccdb-mcp-server-2.0.1.tgz --access public --registry=https://registry.npmjs.org/
 ```
 
 The npm account must own this package (the current registry maintainer is `carbonstop-official`) or have publishing permission. Never publish the private development root. The `ccdb-client` npm dependency is bundled during build and released separately from its own repository. This does not deploy the remote gateway/backend. Package publication is not performed by build/test/CI.

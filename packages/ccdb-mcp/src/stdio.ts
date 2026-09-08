@@ -1,8 +1,9 @@
 import { serveStdio, StdioServerTransport } from '@modelcontextprotocol/server/stdio';
-import { CcdbClient, config, asError } from 'ccdb-client';
+import { CcdbClient, asError } from 'ccdb-client';
+import { appConfig } from './config.js';
 import { createServer } from './server.js';
 export function startStdio(env: NodeJS.ProcessEnv = process.env) {
-  const client = new CcdbClient(config(env));
+  const client = new CcdbClient(appConfig(env));
   const handle = serveStdio((context) => createServer(client, context), {
     transport: new StdioServerTransport(process.stdin, process.stdout, {
       maxBufferSize: 1024 * 1024,

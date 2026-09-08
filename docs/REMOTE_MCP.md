@@ -34,7 +34,7 @@ docker compose config --quiet
 docker compose up -d
 ```
 
-以上在 deploy 目录执行。不要将展开 Secret 的完整 compose config 输出作为公开排障材料。模板不发布宿主端口，仅供同 Docker 网络的 Gateway 访问 `ccdb-mcp:3400`；其他网络或 Kubernetes 要配置实际可达地址。生产建议构建固定版本的内部镜像；模板固定 npm 2.0.0，首次启动仍需访问 npm。
+以上在 deploy 目录执行。不要将展开 Secret 的完整 compose config 输出作为公开排障材料。模板不发布宿主端口，仅供同 Docker 网络的 Gateway 访问 `ccdb-mcp:3400`；其他网络或 Kubernetes 要配置实际可达地址。生产建议构建固定版本的内部镜像；模板使用 npm latest，启动时需访问 npm；生产部署请固定经过验证的版本。
 
 | 环境变量 | 说明 |
 | --- | --- |
