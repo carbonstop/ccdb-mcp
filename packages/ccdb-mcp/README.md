@@ -83,3 +83,6 @@ ccdb-mcp status --profile test --json
 远程用户只需使用服务方提供的公开 Gateway MCP URL，并在宿主中完成 OAuth；宿主支持认证头时可显式选择 API Key。内部 `serve` 服务的部署由管理员负责，不应直接暴露公网。
 
 见 [当前架构](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/GATEWAY_BACKED_MCP.md) 和 [部署配置](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/REMOTE_MCP.md)。
+
+
+默认凭证目录为 `~/.config/carbonstop/ccdb/`（支持系统配置根目录覆盖）。旧目录已有的身份继续沿用原文件和锁，不复制 Token；新身份写入新目录。`CCDB_CONFIG_DIR` 可显式指定独立目录。

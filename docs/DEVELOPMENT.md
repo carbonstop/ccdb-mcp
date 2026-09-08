@@ -11,7 +11,7 @@
 ```sh
 npm ci
 npm run verify
-npm install -g ./dist/releases/ccdb-mcp-server-2.0.1.tgz
+npm install -g ./dist/releases/ccdb-mcp-server-2.0.2.tgz
 ```
 
 最后一行安装刚构建的本地开发包，不是 npm registry 安装。构建不会自动发布 npm。
