@@ -46,13 +46,17 @@ test('handoff JSON examples match installed tool contracts and stdio startup opt
         examples++;
       }
       if (tool === 'get_emission_factor_detail') {
-        detailInputSchema.parse(value.arguments);
+        // User instructions substitute an ID from search before calling detail.
+        // Supply a synthetic search ID here; still validate every other field.
+        const input = { ...value.arguments };
+        if (input.factorId === '<搜索返回的factorId>') input.factorId = '1234567890123456789';
+        detailInputSchema.parse(input);
         examples++;
       }
       if (value.mcpServers) {
         const server = value.mcpServers['ccdb-mcp'];
         assert.deepEqual(server.args, ['stdio']);
-        assert.ok(['local', 'production'].includes(server.env.CCDB_PROFILE));
+        assert.ok(['local', 'test', 'pre', 'production'].includes(server.env.CCDB_PROFILE));
         assert.equal(server.command, 'ccdb-mcp');
       }
     }
