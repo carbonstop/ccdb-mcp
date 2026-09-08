@@ -67,6 +67,6 @@ test('npm tgz packages install offline into fresh directories without shared wor
     const installed = join(directory, 'node_modules/ccdb-mcp-server/dist/main.mjs');
     const result = await run(process.execPath, [installed, '--version'], directory);
     assert.equal(result.code, 0, result.err);
-    assert.match(result.out, /ccdb-mcp 2\.0\.2/);
+    assert.equal(result.out.trim(), `ccdb-mcp ${metadata.version}`);
   }
 });
