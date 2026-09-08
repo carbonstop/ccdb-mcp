@@ -1,120 +1,74 @@
-# 历史兼容模式：Gateway-first 部署
+# Gateway-first 远程 MCP 部署
 
-本文是当前 Gateway → MCP 模式的部署说明。后续 WorkBuddy → MCP → Gateway 方案尚待实现，见 [架构调整与联调前置条件](GATEWAY_BACKED_MCP.md)；不要混用两种方案的配置。
-
-本文仅供已有 Gateway-first 部署维护，不是新部署推荐方案。唯一目标架构见 [PR #5 方案](GATEWAY_BACKED_MCP.md)：WorkBuddy → MCP → Gateway → 业务服务。目标模式尚未实现，不能套用本文的 Management 内部地址配置。PR #4 已关闭。
-
-状态：Node 已实现无状态 Streamable HTTP。本文末尾的历史本地验收不代表生产已部署；WorkBuddy OAuth 和生产 Gateway → Node → Management → CCDB 仍需在目标环境验收。
-
-## Streamable HTTP 协议与 WorkBuddy 接入
-
-- 启动：配置下文的环境变量后运行 `ccdb-mcp serve`。保留默认 `stdio` 模式，不需要另一个 MCP 仓库或二进制。
-- 宿主连接的是公共 HTTPS 网关 `/mcp/ccdb`，不是内部 Node 地址。WorkBuddy 选择 Streamable HTTP，用户无需先安装 npm 包。OAuth 重定向 URI 和授权方式必须按实际宿主配置核对。
-- `POST /mcp/ccdb` 支持 initialize、tools/list、tools/call。客户端发送 `Accept: application/json, text/event-stream`；初始化后的请求携带协商得到的 `MCP-Protocol-Version`。
-- 通知返回 HTTP 202 空正文；不生成 `Mcp-Session-Id`，不要求会话粘滞。GET/DELETE 返回 405 是无状态模式的预期行为，不表示没有支持 Streamable HTTP。
-- 响应由 SDK 编码为 JSON 或 SSE；当前适配层收集完整结果后返回，以保留内部鉴权失败和限流的 HTTP 401/403/429、Retry-After。当前不提供实时进度推送、服务端订阅、断线事件重放，也不提供旧版 `/sse` + `/messages`。
-- 网关须保留 Accept、Content-Type、MCP-Protocol-Version 以及 SDK 使用的 MCP-Method/MCP-Name 协议头，正确转发响应正文、Content-Type、状态码和 Retry-After。每个请求重新验证用户身份并签发内部上下文；签名密钥不得给宿主或浏览器。
-- 公共未认证请求的 401、WWW-Authenticate 和 `/.well-known/oauth-protected-resource/mcp/ccdb` 发现由网关负责。仅启动 Node 不构成完整的 OAuth 连接器。
-
-自动化验收：`tests/http.test.ts` 使用官方 `StreamableHTTPClientTransport`，通过 Fetch 适配层完成初始化、通知、列工具和查询；另测 405、406、无效协议版本以及按请求身份隔离、撤权、限流。这里不是 WorkBuddy UI、公共 TLS 或真实 OAuth 联调。
-
-协议依据：[MCP Streamable HTTP 传输规范](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports)。
-
-## 请求链路
+这是当前采用的架构，不再是历史兼容方案。见 [架构说明](GATEWAY_BACKED_MCP.md)。本地 stdio 不变，远程用户无需安装 CLI/MCP 包。
 
 ```text
-外部宿主 → Gateway /mcp/ccdb
-  校验 MCP audience 的 OAuth Token 或 CCDB_AGENT Key
-  删除外部凭证和身份头，生成最长 60 秒内部签名票据
-    → Node ccdb-mcp serve
-      验签；握手/列工具不调用 Management
-      tools/call → Management /internal/ccdb/mcp/execute
-        验签、当前授权/Key、AgentBase 成员、scope、单次票据、资源配额
-          → 复用原 CCDB 搜索/详情服务 → 原响应字段返回
+WorkBuddy → Gateway /mcp/ccdb → 内网 MCP
+                              MCP → Gateway /internal/ccdb/mcp/execute → Management
 ```
 
-REST 资源为 `<网关>/management/api/ccdb/v1`；MCP 资源为 `<网关>/mcp/ccdb`。二者不互通 Token。授权码、设备码和 Refresh Token 绑定申请时的资源；换码/刷新不能切换资源。旧 Refresh Token 的 resource_uri 为空时按原 REST 资源处理。
+## 地址与路由
 
-节点仅接受配置的 Management 内部 URL。它不会把外部 Bearer 或 Key 转发到另一个资源服务器。Management 不接受正文 userId/companyId 覆盖身份，也不接受 `from-source: inner` 代替签名。公开网关明确拦截 `/management/internal/ccdb/mcp/**` 及 `/internal/ccdb/mcp/**`。
+| 配置 | 测试环境示例 | 用途 |
+| --- | --- | --- |
+| 宿主 URL / CCDB_MCP_RESOURCE | https://gateway-base-test.carbonstop.com/mcp/ccdb | 公开 MCP 入口和 OAuth resource |
+| CCDB_MCP_EXECUTION_URL | https://gateway-base-test.carbonstop.com/internal/ccdb/mcp/execute | MCP 执行回程，只携带票据 |
+| Gateway ccdb.mcp.target | http://ccdb-mcp:3400 | Gateway 可达的内网 MCP 根地址，按部署调整 |
+| OAuth issuer | https://gateway-base-test.carbonstop.com/auth | 授权服务器 |
 
-## 本地准备顺序
+回程由 Gateway 固定转发 Management，不返回 MCP，不形成循环。不要将 token/register URL、Management 地址或公共 `/mcp/ccdb` 填到执行 URL。出站目标仅由运维配置，不接受工具参数指定 URL。
 
-1. 先对现有 Management 数据库执行 `carbon260311/sql/ccdb_oauth_resource_binding_20260907.sql`。这是新增 resource_uri 字段的 MySQL 5.7 幂等脚本，不删除存量数据。本轮未代为执行。
-2. 配好 Auth/Gateway/Management 的资源 URI。三者必须一致。MCP 开关默认 false；未完成新版本和迁移前不要开启。
-3. 为 Gateway、Node 和 Management 配置同一组内部签名密钥；只放本地私密配置/环境，不放 npm 包、前端或公开仓库。
-4. 编译/重启相关服务以加载新代码和 SQL 映射，再启动 Node。这里只给顺序，不自动停止用户已启动的服务。
-5. 验证内部节点 health、Gateway 公共发现、未认证 401、OAuth 资源绑定，再做工具查询及限流。
+## 发布顺序
 
-### 后端配置示例
+1. 后端提交并发布 Gateway 执行路由，确认无票据请求被拒绝（功能关闭可能为 404）。本次回程调整据后端说明不新增 SQL；旧环境已有的 OAuth/resource 迁移仍需后端确认。
+2. 确认 Gateway/Auth/Management 的 MCP resource 一致，Gateway target 指向 MCP，签名配置通过 Secret 系统管理。
+3. 将 MCP 执行目标改为 Gateway，再重启 MCP。仅切环境变量不会替你发布后端。
+4. 配置 Gateway 公共 HTTPS、证书、资源发现、宿主客户端登记，完成端到端验收。
 
-三个服务的配置中合并以下字段（不要重复创建同名 YAML 根节点）：
+## MCP 部署
 
-```yaml
-agent:
-  oauth:
-    issuer: http://127.0.0.1:8880/auth
-    web-url: http://127.0.0.1:3100
-    resource: http://127.0.0.1:8880/management/api/ccdb/v1
-    mcp-resource: http://127.0.0.1:8880/mcp/ccdb
-    mcp-enabled: false # 全部服务、SQL 和 Node 就绪后才开启
+使用 [Compose 模板](../deploy/docker-compose.yml)，将 [环境模板](../deploy/.env.example) 复制为 deploy/.env 并核对环境。通过部署平台注入 CCDB_MCP_CONTEXT_KEYS（JSON kid → Base64，至少 32 字节随机密钥）；模板不提供可用密钥，不能将密钥粘贴到聊天、Git 或命令参数。
+
+```sh
+docker compose config --quiet
+docker compose up -d
 ```
 
-Gateway 和 Management 额外配置（Auth 不需要签名密钥）：
+以上在 deploy 目录执行。不要将展开 Secret 的完整 compose config 输出作为公开排障材料。模板不发布宿主端口，仅供同 Docker 网络的 Gateway 访问 `ccdb-mcp:3400`；其他网络或 Kubernetes 要配置实际可达地址。生产建议构建固定版本的内部镜像；模板固定 npm 2.0.0，首次启动仍需访问 npm。
 
-```yaml
-ccdb:
-  mcp:
-    context-keys: '${CCDB_MCP_CONTEXT_KEYS:}' # JSON：kid → 至少 32 字节 Base64 密钥
-    signing-key-id: local-v1 # Gateway 签发用；Management 只读取 keys
-    target: http://127.0.0.1:3400 # 仅 Gateway，内部 Node 根地址
-    transport-qps: 20 # 仅 Gateway，独立 IP 传输桶，不是因子额度
-    allowed-origins: http://127.0.0.1:3100 # 仅 Gateway；空值表示不允许浏览器跨域，非浏览器不受影响
-```
+| 环境变量 | 说明 |
+| --- | --- |
+| CCDB_MCP_RESOURCE | Gateway 完整公开 /mcp/ccdb URL |
+| CCDB_MCP_EXECUTION_URL | Gateway 完整 /internal/ccdb/mcp/execute URL，不允许 Query |
+| CCDB_MCP_CONTEXT_KEYS | Secret 注入的验签密钥，不公开 |
+| CCDB_MCP_HOST | 容器用 0.0.0.0，本机可用 127.0.0.1 |
+| CCDB_MCP_PORT | 示例和默认均为 3400 |
+| CCDB_MCP_ALLOWED_HOSTS | 精确白名单，包含探针 Host 和 Gateway 转发后的实际 Host |
+| CCDB_MCP_ALLOWED_ORIGINS | 精确浏览器来源；空值禁止浏览器跨域，不影响无 Origin 请求 |
+| CCDB_TIMEOUT_MS | 默认 30000，范围 100–120000 毫秒 |
+| CCDB_MCP_MAX_CONCURRENT | 默认 100 |
 
-禁止使用文档中公开的固定测试密钥。用密码学随机生成至少 32 字节，作为 JSON 字符串存入三个运行进程的环境。密钥 ID 可轮换：先让三方同时接受新旧 kid，再让 Gateway 改用新 kid，等旧票据最长 60 秒过期后移除旧 kid。
+Gateway 若保留公共 Host，应将该 Host 精确加入白名单，不用 `*`。Origin 只填真实需要的来源，不能凭 OAuth 授权页域名推断宿主 Origin。非本机出站 HTTP 默认拒绝；受控内网确需时显式设置 CCDB_MCP_ALLOW_INSECURE_INTERNAL_HTTP=true，优先 HTTPS。本地执行回程为 `http://127.0.0.1:8880/internal/ccdb/mcp/execute`，不是 Management 端口。
 
-### Node 进程配置
+启动使用 `ccdb-mcp serve`，不需要 --http/--port；地址端口使用环境变量。不传命令默认 stdio。
 
-```powershell
-$env:CCDB_MCP_RESOURCE='http://127.0.0.1:8880/mcp/ccdb'
-$env:CCDB_MCP_EXECUTION_URL='http://127.0.0.1:你的Management实际端口/internal/ccdb/mcp/execute'
-$env:CCDB_MCP_HOST='127.0.0.1'
-$env:CCDB_MCP_PORT='3400'
-$env:CCDB_MCP_ALLOWED_HOSTS='127.0.0.1:3400'
-$env:CCDB_MCP_ALLOWED_ORIGINS='http://127.0.0.1:3100'
-# CCDB_MCP_CONTEXT_KEYS 由私密环境注入，不在此粘贴密钥。
-node ./packages/ccdb-mcp/dist/main.mjs serve
-```
+## 协议与 Gateway 要求
 
-Management 端口必须读取本地真实启动配置，不能照抄占位符。不要将内部 execute URL 配成公开网关，否则会被 404 拦截。非本机内部 HTTP 默认拒绝；受控内网确需 HTTP 时须显式 `CCDB_MCP_ALLOW_INSECURE_INTERNAL_HTTP=true`，生产优先 HTTPS/mTLS 和网络访问控制。
+- 公共 POST /mcp/ccdb 支持 initialize、notifications/initialized、tools/list、tools/call；保留 Accept、Content-Type、MCP-Protocol-Version、MCP-Method/MCP-Name。
+- Accept 包含 application/json 和 text/event-stream。通知为 HTTP 202 空正文；无 Mcp-Session-Id，不需要会话粘滞。GET/DELETE 不提供独立流（有效身份下 405），没有旧 /sse + /messages。
+- 当前适配器缓冲完整结果后返回 JSON 或 SSE，以保留 401/403/429；没有实时进度、订阅或断线重放。代理须保留正文、Content-Type、HTTP 状态与 Retry-After，设置匹配超时。
+- Gateway 提供 `/.well-known/oauth-protected-resource/mcp/ccdb` 和公共未认证 401 的 WWW-Authenticate。Node 仅提供内部 /health 和票据保护的 /mcp/ccdb，不是用户认证入口。
+- Gateway 每次验证用户身份，清除原 Token/Key 和伪造内部身份头后签发票据；执行入口再次验票但不提前消费。Management 消费票据、校验当前授权、执行配额和审计。
+- 只开放有票据校验的精确 POST 执行路由，不放开 /management/internal/ccdb/mcp/** 或整个 /internal/**。宿主不调用执行接口。
 
-Gateway 转发后的 Host 应为内部 Node 主机；若网关配置了 PreserveHost，需去掉该选项或在 Node 精确 Host 白名单配置实际值，不允许 `*`。Origin 白名单只填真实需要的浏览器来源。
+## 执行协议
 
-## 公开接口与内部接口
-
-| 接口                                                 | 用途                                                  |
-| ---------------------------------------------------- | ----------------------------------------------------- |
-| GET `/.well-known/oauth-protected-resource/mcp/ccdb` | MCP 独立资源发现，关闭时 404                          |
-| POST `/mcp/ccdb`                                     | MCP JSON-RPC / 协议传输入口，公共凭证止于网关         |
-| POST `/auth/oauth/token`                             | 沿用原端点；resource 必须与本次授权一致               |
-| POST `/internal/ccdb/mcp/execute`                    | 仅 Management 内网，Node 调用；绝不供外部宿主直接调用 |
-
-MCP 未认证返回 HTTP 401 和 `WWW-Authenticate: Bearer resource_metadata=".../.well-known/oauth-protected-resource/mcp/ccdb"`。权限不足为 403；配额不足为 429 和 Retry-After。已有 REST 的 discovery、Token audience、响应结构不改变。
-
-工具业务配额的 429 也保留为 HTTP 429，不包装成 HTTP 200；内部服务提供的 Retry-After 和 requestId 会保留。Node 不自动重试工具请求，不复用已执行的内部票据。调用方应按 Retry-After 等待后再发起新请求，不能切换凭证绕过额度。
-
-内部 execute 正文示例：
+POST {gateway}/internal/ccdb/mcp/execute，携带 X-CCDB-Execution-Context、Content-Type、Accept；不附 Authorization/X-API-Key、Query 或正文用户/组织/下游地址。
 
 ```json
 {
   "tool": "search_emission_factors",
-  "arguments": {
-    "query": "电力",
-    "language": "zh",
-    "accountingType": "product",
-    "filters": { "country": ["中国"], "year": [2024] },
-    "limit": 5
-  }
+  "arguments": { "query": "电力", "language": "zh", "limit": 2 }
 }
 ```
 
@@ -125,23 +79,16 @@ MCP 未认证返回 HTTP 401 和 `WWW-Authenticate: Bearer resource_metadata="..
 }
 ```
 
-必须携带网关签发的 `X-CCDB-Execution-Context`，不能由对接同事手工拼造用户身份。一张票据只能执行一次，重复执行拒绝；业务超时也不要重发同一票据。客户端重新发公共 MCP 请求时由网关重新鉴权签发。
+详情 ID 必须替换为搜索实际返回的字符串。搜索裸对象、详情 code/msg/data 包装、guidance、掩码值和 detailUrl 保留。
 
-内部票据不含原 Token、原 Key 或 Secret Hash。`keyVersion` 是 Secret Hash 的二次摘要，只用于核对 Key 是否重置，不能用于公共认证。用户 ID 和组织 ID 使用字符串，Java/Node 不经 Number 转换。
+MCP 验票据签名、有效期、issuer/audience、sourceResource。票据最长 60 秒，每请求独立，一张最多执行一个工具。初始化/列工具不调用执行接口。执行不自动重试，超时不表示未执行，不复用票据或切共享 Key。401/403/429 保持 HTTP 错误及可用 Retry-After，不返回成功空数组。
 
-## 验收门槛
+## 上线验收
 
-- 握手、tools/list：无因子业务调用，不消耗因子日额度；仍受独立传输限流。
-- 每次 tools/call：按当前生效策略的 CREDENTIAL/USER 等维度各计一次；沿用 REST 相同 Redis 维度键，不能多入口绕过总额度。
-- 两个用户交错调用：票据、用户、组织、授权均独立，不使用全局 OAuth/Key 单例。
-- OAuth 撤销、Key 停用/重置：Management 在工具调用时查当前状态，旧内部票据也被拒绝。
-- 成功的 MCP Key 工具调用通过审计事务更新 Key 最近使用时间/IP 和调用次数；requestId 去重，审计重试不重复计数，乱序事件不倒退最近使用时间。握手、列工具、失败及拒绝请求不计入 Key 的成功使用次数，失败审计仍保留。
-- 旧业务 Key、REST Token、错误 audience、伪造/过期/重放票据：均不得得到因子业务响应。
-- 原因子脱敏、详情字段、detailUrl 和搜索限制由同一业务实现负责。
-- 在本地真实三服务和 CCDB 可访问后，补全真实授权 → 调用 → 撤销、双用户、计数和审计验证；现有模拟测试不是该项的替代品。
+- metadata resource/issuer 与实际环境一致；预注册或已启用且公布的 DCR。
+- 真实宿主 PKCE、初始化、通知、列工具、搜索、详情、刷新和撤权。
+- 无效/错误 audience/过期凭证，伪造/重放票据、Key 停用、双用户隔离、权限和限流。
+- 初始化/列工具不消耗因子额度，工具调用不重复计费，保留 requestId 审计。
+- MCP 出站仅到 Gateway，不直接访问 Management，两个路由不循环。
 
-外部宿主是否支持手工 client_id、远程 OAuth、设备码及安装格式，需要逐个宿主验证。不能因为 SDK 测试通过就声明 Codex、豆包、WorkBuddy 全部已兼容。
-
-## 本机可重现启动配置
-
-原开发工作区的本地配置与启动脚本在独立的 `ccdb-integration-lab/config` 目录，不随本仓库分发。新开发者请按本文配置示例建立自己的本地配置和私密签名密钥，不复制或索要他人凭证。2026-09-07 本地已完成资源绑定迁移、开启 MCP 并重启服务，设备码授权和真实搜索/详情链路通过；范围及剩余验收见 [VERIFICATION.md](VERIFICATION.md)。这不表示预发或生产已启用。
+自动测试使用模拟后端，不替代真实 WorkBuddy/TLS/后端验收。后端报告通过部分本地真实测试，但当时修改未提交或发布测试环境，不能标记为生产可用。

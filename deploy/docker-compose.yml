@@ -1,0 +1,27 @@
+services:
+  ccdb-mcp:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /tmp
+    user: node
+    command: ["npx", "-y", "ccdb-mcp-server@2.0.0", "serve"]
+    expose:
+      - "3400"
+    environment:
+      CCDB_MCP_RESOURCE: ${CCDB_MCP_RESOURCE:?Set public Gateway MCP resource}
+      CCDB_MCP_EXECUTION_URL: ${CCDB_MCP_EXECUTION_URL:?Set Gateway execution URL}
+      CCDB_MCP_CONTEXT_KEYS: ${CCDB_MCP_CONTEXT_KEYS:?Inject private context keys}
+      CCDB_MCP_HOST: "0.0.0.0"
+      CCDB_MCP_PORT: "3400"
+      CCDB_MCP_ALLOWED_HOSTS: ${CCDB_MCP_ALLOWED_HOSTS:-ccdb-mcp:3400,127.0.0.1:3400}
+      CCDB_MCP_ALLOWED_ORIGINS: ${CCDB_MCP_ALLOWED_ORIGINS:-}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3400/health',{signal:AbortSignal.timeout(2000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

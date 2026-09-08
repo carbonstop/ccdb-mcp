@@ -3,6 +3,27 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { searchSchema, detailInputSchema } from 'ccdb-client/contracts';
 
+test('remote docs consistently select gateway-first with gateway execution', async () => {
+  for (const file of [
+    'README.md',
+    'packages/ccdb-mcp/README.md',
+    'docs/GATEWAY_BACKED_MCP.md',
+    'docs/REMOTE_MCP.md',
+  ]) {
+    const doc = await readFile(file, 'utf8');
+    assert.match(doc, /Gateway-first/, file);
+    assert.match(doc, /Gateway \/mcp\/ccdb/, file);
+    assert.match(doc, /Gateway \/internal\/ccdb\/mcp\/execute/, file);
+    assert.doesNotMatch(doc, /唯一目标架构采用|新部署请等待目标模式|仅保留用于已有部署/, file);
+  }
+  const env = await readFile('deploy/.env.example', 'utf8');
+  assert.match(
+    env,
+    /CCDB_MCP_EXECUTION_URL=https:\/\/gateway-base-test.carbonstop.com\/internal\/ccdb\/mcp\/execute/,
+  );
+  assert.doesNotMatch(env, /^CCDB_MCP_CONTEXT_KEYS=/m);
+});
+
 test('user-facing READMEs install the published MCP package first', async () => {
   const pkg = JSON.parse(await readFile('packages/ccdb-mcp/package.json', 'utf8'));
   for (const file of ['README.md', 'packages/ccdb-mcp/README.md']) {

@@ -37,15 +37,16 @@ API Key 是用户主动选择的备选：使用 `ccdb-mcp login --method api-key
 
 ## 远程连接器：Streamable HTTP
 
-唯一目标架构采用 [PR #5](https://github.com/carbonstop/ccdb-mcp/pull/5)：
+当前采用 Gateway-first 架构：
 
 ```text
 用户授权：WorkBuddy → Gateway/Auth（OAuth + PKCE）
-工具请求：WorkBuddy → 公共 MCP → Gateway → 业务服务
+协议请求：WorkBuddy → Gateway /mcp/ccdb → 内网 MCP
+工具执行：MCP → Gateway /internal/ccdb/mcp/execute → Management → CCDB
 ```
 
-MCP 独立提供协议端点及资源发现，复用现有 Gateway/Auth，不重新实现登录页或发 Token，也不直接调用 Management 内网接口。远程优先宿主 OAuth；API Key 是宿主支持认证请求头时的显式备选，不自动降级。
+宿主填写 Gateway 的公开 MCP URL，不连接内部 Node。Gateway 每次校验 OAuth Token 或 API Key，生成短时签名票据；MCP 验票并仅向 Gateway 发出工具执行请求。MCP 不直接调用 Management，不另建登录页、Token 签发或 Token Exchange。API Key 为宿主支持认证头时的显式备选，不自动降级。
 
-**实现状态：该目标调用链尚未实现，不能通过当前 npm 包的环境变量启用。** Token 校验、资源绑定和下游调用契约需先确认，见 [架构与接入前置条件](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/GATEWAY_BACKED_MCP.md)。PR #4 的 direct-Management 草稿已关闭，不采用该方案。
+现有 `ccdb-mcp serve` 支持该票据协议，更换执行目标不需要新运行模式。先发布后端 Gateway 执行路由，再配置 MCP 的 CCDB_MCP_EXECUTION_URL 指向 Gateway。后端交接中的本地通过结果不代表测试/生产已发布或 WorkBuddy 已验收。
 
-当前版本的 `serve` 仍是旧 Gateway-first 实现，仅保留用于已有部署的兼容；[历史部署说明](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/REMOTE_MCP.md) 不是目标架构的配置指南。新部署请等待目标模式实现及验收，不要混用两者参数。
+此前 PR #5 的宿主直连独立 MCP 规划已被替代；不采用 PR #4 的 direct-Management 方案。见 [当前架构](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/GATEWAY_BACKED_MCP.md) 和 [部署配置](https://github.com/carbonstop/ccdb-mcp/blob/main/docs/REMOTE_MCP.md)。
