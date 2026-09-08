@@ -66,7 +66,7 @@ ccdb-mcp status --json
     "ccdb-mcp": {
       "command": "ccdb-mcp",
       "args": ["stdio"],
-      "env": { "CCDB_PROFILE": "production", "CCDB_CLIENT_ID": "ccdb-connect-local" }
+      "env": { "CCDB_PROFILE": "production" }
     }
   }
 }
