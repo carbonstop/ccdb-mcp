@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     working_dir: /tmp
     user: node
-    command: ["npx", "-y", "ccdb-mcp-server@2.0.0", "serve"]
+    command: ["npx", "-y", "ccdb-mcp-server@latest", "serve"]
     expose:
       - "3400"
     environment:
