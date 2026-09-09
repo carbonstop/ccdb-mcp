@@ -37,7 +37,7 @@ test('npm tgz packages install offline into fresh directories without shared wor
   assert.ok(process.env.npm_execpath, 'Run using npm test');
   for (const name of ['mcp']) {
     const directory = await mkdtemp(join(tmpdir(), `ccdb-pack-${name}-`));
-    const archive = resolve('dist/releases/ccdb-mcp-server-2.0.3.tgz');
+    const archive = resolve('dist/releases/ccdb-mcp-2.0.4.tgz');
     const install = await run(
       process.execPath,
       [
@@ -55,16 +55,17 @@ test('npm tgz packages install offline into fresh directories without shared wor
     assert.equal(install.code, 0, install.err);
     await assert.rejects(access(join(directory, 'node_modules/ccdb-client')), { code: 'ENOENT' });
     const notices = await readFile(
-      join(directory, 'node_modules/ccdb-mcp-server/dist/THIRD_PARTY_NOTICES.txt'),
+      join(directory, 'node_modules/ccdb-mcp/dist/THIRD_PARTY_NOTICES.txt'),
       'utf8',
     );
     assert.match(notices, /=== node_modules\/ccdb-client \d+\.\d+\.\d+ ===\s+MIT License/);
     const metadata = JSON.parse(
-      await readFile(join(directory, 'node_modules/ccdb-mcp-server/package.json'), 'utf8'),
+      await readFile(join(directory, 'node_modules/ccdb-mcp/package.json'), 'utf8'),
     );
     assert.deepEqual(metadata.bin, { 'ccdb-mcp': 'dist/main.mjs' });
-    assert.equal(metadata.version, '2.0.3');
-    const installed = join(directory, 'node_modules/ccdb-mcp-server/dist/main.mjs');
+    assert.equal(metadata.name, 'ccdb-mcp');
+    assert.equal(metadata.version, '2.0.4');
+    const installed = join(directory, 'node_modules/ccdb-mcp/dist/main.mjs');
     const result = await run(process.execPath, [installed, '--version'], directory);
     assert.equal(result.code, 0, result.err);
     assert.equal(result.out.trim(), `ccdb-mcp ${metadata.version}`);

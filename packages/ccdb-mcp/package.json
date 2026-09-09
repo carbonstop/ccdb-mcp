@@ -1,6 +1,6 @@
 {
-  "name": "ccdb-mcp-server",
-  "version": "2.0.3",
+  "name": "ccdb-mcp",
+  "version": "2.0.4",
   "type": "module",
   "description": "CCDB Connect MCP server with authenticated factor search and details",
   "bin": {

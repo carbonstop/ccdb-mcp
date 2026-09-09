@@ -1,17 +1,19 @@
 # CCDB Connect MCP
 
-npm 包：`ccdb-mcp-server`；命令：`ccdb-mcp`。升级前请阅读仓库中的迁移说明，旧工具接口可能不兼容。
+npm 包：`ccdb-mcp`；命令：`ccdb-mcp`。升级前请阅读仓库中的迁移说明，旧工具接口可能不兼容。
 
 独立 Node.js 22+ MCP 包，提供 stdio、包内登录和诊断。无需另外安装 CLI 或 ccdb-client。
 
 ## 从 npm 安装
 
 ```sh
-npm install -g ccdb-mcp-server@latest
+npm install -g ccdb-mcp@latest
 ccdb-mcp --version
 ```
 
 再次执行上述命令可升级到 npm latest。镜像未同步时追加 `--registry=https://registry.npmjs.org/`。数据库访问仍需有效授权和可用后端。
+
+从旧包迁移：先执行 `npm uninstall -g ccdb-mcp-server`，再安装新包，避免同名命令冲突。无需执行 logout 或删除凭证；命令、凭证位置和 OAuth client ID 不变。使用 `npx` 的宿主和部署配置需将包名改为 `ccdb-mcp@latest`。
 
 ## 本地 stdio：默认 device OAuth，API Key 为备选
 
