@@ -4,17 +4,24 @@ import { readFile } from 'node:fs/promises';
 import { searchSchema, detailInputSchema } from 'ccdb-client/contracts';
 
 test('remote docs consistently select gateway-first with gateway execution', async () => {
-  for (const file of [
-    'README.md',
-    'packages/ccdb-mcp/README.md',
-    'docs/GATEWAY_BACKED_MCP.md',
-    'docs/REMOTE_MCP.md',
-  ]) {
+  for (const file of ['docs/GATEWAY_BACKED_MCP.md', 'docs/REMOTE_MCP.md']) {
     const doc = await readFile(file, 'utf8');
     assert.match(doc, /Gateway-first/, file);
     assert.match(doc, /Gateway \/mcp\/ccdb/, file);
     assert.match(doc, /Gateway \/internal\/ccdb\/mcp\/execute/, file);
     assert.doesNotMatch(doc, /唯一目标架构采用|新部署请等待目标模式|仅保留用于已有部署/, file);
+  }
+  // Public onboarding links to the deployment contract without copying internal routes.
+  for (const file of ['README.md', 'packages/ccdb-mcp/README.md']) {
+    const doc = await readFile(file, 'utf8');
+    assert.match(
+      doc,
+      /https:\/\/github.com\/carbonstop\/ccdb-mcp\/blob\/main\/docs\/REMOTE_MCP.md/,
+    );
+    assert.match(
+      doc,
+      /https:\/\/github.com\/carbonstop\/ccdb-mcp\/blob\/main\/docs\/GATEWAY_BACKED_MCP.md/,
+    );
   }
   const env = await readFile('deploy/.env.example', 'utf8');
   assert.match(
@@ -36,7 +43,7 @@ test('user-facing READMEs install the published MCP package first', async () => 
 
 test('handoff JSON examples match installed tool contracts and stdio startup options', async () => {
   let examples = 0;
-  for (const file of ['README.md', 'docs/REMOTE_MCP.md']) {
+  for (const file of ['README.md', 'packages/ccdb-mcp/README.md', 'docs/REMOTE_MCP.md']) {
     const markdown = await readFile(new URL('../' + file, import.meta.url), 'utf8');
     for (const match of markdown.matchAll(/```json\s*\n([\s\S]*?)\n```/g)) {
       const value = JSON.parse(match[1]);
@@ -61,5 +68,5 @@ test('handoff JSON examples match installed tool contracts and stdio startup opt
       }
     }
   }
-  assert.equal(examples, 4);
+  assert.equal(examples, 6);
 });
