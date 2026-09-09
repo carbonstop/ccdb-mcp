@@ -232,7 +232,7 @@ export function createHttpApplication(settings: HttpConfig, fetcher: typeof fetc
       return errorResponse(new CcdbError('FORBIDDEN_ORIGIN', 'Host 或 Origin 不在白名单', 403));
     const path = new URL(request.url).pathname;
     if (path === '/health' && request.method === 'GET')
-      return Response.json({ status: 'ok', service: 'ccdb-mcp', version: '2.0.3' });
+      return Response.json({ status: 'ok', service: 'ccdb-mcp', version: '2.0.4' });
     if (path !== '/mcp/ccdb') return errorResponse(new CcdbError('NOT_FOUND', '接口不存在', 404));
     if (request.method === 'OPTIONS')
       return new Response(null, {

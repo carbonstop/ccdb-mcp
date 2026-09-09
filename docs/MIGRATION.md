@@ -1,5 +1,21 @@
 # OAuth MCP migration
 
+## Package rename in 2.0.4
+
+The npm package is now `ccdb-mcp` (formerly `ccdb-mcp-server`). The executable remains `ccdb-mcp`. This is a packaging/name change from 2.0.3, not a new authentication or remote architecture migration.
+
+For an existing global installation:
+
+```sh
+npm uninstall -g ccdb-mcp-server
+npm install -g ccdb-mcp@latest
+ccdb-mcp --version
+```
+
+Both packages expose the same command, so remove the old global package before installing the new one. Do not run logout or delete credentials as part of the rename. Credential paths, profiles and OAuth client IDs are unchanged. Restart the MCP host after upgrading. Replace the old package name in `npx` host/deployment configurations with `ccdb-mcp@latest`; hosts already using the installed `ccdb-mcp` command need no command change. Old npm versions remain available; updating the old package does not automatically migrate to the new name.
+
+## Historical 2.0 migration
+
 Source snapshot: `carbonstop/ccdb-integrations` commit `b69f46b5b6f44c70067032a01edaafd13aa790d4`.
 This PR replaces the legacy implementation without rewriting history or removing existing published releases.
 

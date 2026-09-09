@@ -26,6 +26,7 @@ test('built standalone MCP initializes/lists/calls using SDK; only two business 
   const client = new Client({ name: 'integration-tests', version: '1.0.0' });
   try {
     await client.connect(transport);
+    assert.deepEqual(client.getServerVersion(), { name: 'ccdb-mcp', version: '2.0.4' });
     const tools = await client.listTools();
     assert.deepEqual(tools.tools.map((t) => t.name).sort(), [
       'get_emission_factor_detail',
